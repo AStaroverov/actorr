@@ -1,7 +1,7 @@
-import { getMessagePort as getMessagePortByName, onMessagePortFinalize } from './ports';
+import {getMessagePort as getMessagePortByName} from './ports';
 import {TMessagePortName} from "./types";
 import {TActor, TEnvelope} from "../types";
-import { isEnvelope } from '../envelope';
+import {isEnvelope} from '../envelope';
 
 export function connectActorToMessagePort<T extends TEnvelope<any, any>>(
     actor: TActor<T>,
@@ -13,29 +13,32 @@ export function connectActorToMessagePort<T extends TEnvelope<any, any>>(
     const onPortMessage = ({ data }: MessageEvent<unknown | T>) => {
         if (isEnvelope(data)) {
             envelopes.add(data as T);
-            actor.dispatch(data as T);
+            queueMicrotask(() => {
+                try {
+                    actor.dispatch(data as T)
+                } catch (err) {
+                    console.error(err);
+                }
+            });
         }
     }
     const onMailboxEnvelope = (envelope: T) => {
         if (!envelopes.has(envelope)) {
-            try {
-                getMessagePort()?.postMessage(envelope, envelope.transferable as any);
-            } catch (err) {
-                console.error(err);
-            }
+            queueMicrotask(() => {
+                try {
+                    getMessagePort()?.postMessage(envelope, envelope.transferable as any)
+                } catch (err) {
+                    console.error(err);
+                }
+            });
         }
     };
-    const disconnect = () => {
-        getMessagePort()?.removeEventListener('message', onPortMessage);
-        actor.mailbox.unsubscribe(onMailboxEnvelope);
-    }
 
     getMessagePort()?.addEventListener('message', onPortMessage);
     actor.mailbox.subscribe(onMailboxEnvelope);
 
-    if (!isInstance) {
-        onMessagePortFinalize(port, disconnect);
+    return () => {
+        getMessagePort()?.removeEventListener('message', onPortMessage);
+        actor.mailbox.unsubscribe(onMailboxEnvelope);
     }
-
-    return disconnect;
 }

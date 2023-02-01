@@ -11,4 +11,4 @@ export { connectActorToMessagePort } from './src/worker/connectActorToMessagePor
 export { DISCONNECT_MESSAGE_PORT_TYPE, CONNECT_MESSAGE_PORT_TYPE } from './src/worker/defs';
 
 // Advanced public methods
-export { getAllMessagePorts, hasMessagePort, addMessagePort, getMessagePort, onMessagePortFinalize } from './src/worker/ports';
+export { getAllMessagePorts, getMessagePort, setMessagePort, deleteMessagePort, onMessagePortFinalize } from './src/worker/ports';

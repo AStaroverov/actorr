@@ -6,7 +6,12 @@ const actorSum = createActorSum().launch();
 const actorMinMax = createActorMinMax().launch();
 
 onConnectMessagePort((name) => {
-    connectActorToMessagePort(actorSum, name);
-    connectActorToMessagePort(actorMinMax, name);
-})
+    const dis1 = connectActorToMessagePort(actorSum, name);
+    const dis2 = connectActorToMessagePort(actorMinMax, name);
 
+    // on disconnect
+    return () => {
+        dis1();
+        dis2();
+    }
+});
