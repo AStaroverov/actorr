@@ -1,4 +1,4 @@
-import {TEnvelope} from "./types";
+import type {TEnvelope} from "./types";
 
 export function createEnvelope<T extends string, P>(
     type: T,

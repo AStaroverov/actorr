@@ -27,3 +27,4 @@ export type TActor<T extends TEnvelope<any, any>> = {
     destroy: () => TActor<T>;
 };
 
+export type TExtractEnvelope<A> = A extends TActor<infer T> ? T : never;
