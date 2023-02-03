@@ -3,7 +3,7 @@ import {createEnvelope} from "../../../../src/envelope";
 import {MINMAX_ACTION_TYPE, MINMAX_RESULT_TYPE, TMinMaxActionEnvelope, TMinMaxResultEnvelope} from "./defs";
 
 export function createActorMinMax() {
-    return createActor<TMinMaxActionEnvelope|TMinMaxResultEnvelope>('MIN_MAX', (envelope, dispatch) => {
+    return createActor<TMinMaxActionEnvelope|TMinMaxResultEnvelope>('MIN_MAX', (envelope, {dispatch}) => {
         if (envelope.type === MINMAX_ACTION_TYPE) {
             const result = new Float64Array([
                 Math.min(...envelope.payload),

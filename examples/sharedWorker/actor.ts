@@ -1,5 +1,4 @@
 import {createActor} from "../common/actors/createActor";
-import {TSumActionEnvelope, TSumResultEnvelope} from "../common/actors/sum/defs";
 import {
     MULTIPLY_ACTION_TYPE,
     MULTIPLY_RESULT_TYPE,
@@ -10,8 +9,6 @@ import {createEnvelope, LAUNCH_TYPE} from "../../main";
 
 export function createActorMain() {
     return createActor<
-        | TSumActionEnvelope
-        | TSumResultEnvelope
         | TMultiplyActionEnvelope
         | TMultiplyResultEnvelope
     >('MAIN', (envelope, { dispatch }) => {
