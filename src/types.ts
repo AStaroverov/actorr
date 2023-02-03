@@ -16,7 +16,8 @@ export type TMailbox<T extends TEnvelope<any, any>> = {
     unsubscribe(callback: (envelope: T) => unknown): void;
 }
 
-export type TReaction<T extends TEnvelope<any, any>> = (envelope:T, dispatch: (envelope:T) => void) => unknown;
+export type TReaction<T extends TEnvelope<any, any>> =
+    (envelope: T, context: { mailbox: TMailbox<T>, dispatch: (envelope:T) => void }) => unknown;
 
 export type TActor<T extends TEnvelope<any, any>> = {
     name: string;
@@ -26,5 +27,3 @@ export type TActor<T extends TEnvelope<any, any>> = {
     launch: () => TActor<T>;
     destroy: () => TActor<T>;
 };
-
-export type TExtractEnvelope<A> = A extends TActor<infer T> ? T : never;

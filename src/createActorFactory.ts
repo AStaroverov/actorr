@@ -6,29 +6,27 @@ export function createActorFactory(props: { getMailbox: () => TMailbox<any> }) {
     return function createActor
     <T extends TEnvelope<any, any>>(name: string, reaction: TReaction<T | TSystemEnvelope>): TActor<T | TSystemEnvelope> {
         const mailbox = props.getMailbox();
-        const dispatch = mailbox.dispatch.bind(mailbox)
+        const context = { dispatch: mailbox.dispatch.bind(mailbox), mailbox };
         const callback = (envelope: T) => {
-            reaction(envelope, dispatch);
-            return ctx;
+            reaction(envelope, context);
         }
         const launch = () => {
             mailbox.subscribe(callback);
             mailbox.dispatch(createEnvelope(LAUNCH_TYPE, undefined))
-            return ctx;
+            return actor;
         };
         const destroy = () => {
             mailbox.dispatch(createEnvelope(DESTROY_TYPE, undefined))
             mailbox.unsubscribe(callback);
-            return ctx;
+            return actor;
         };
-        const ctx = {
+        const actor = {
+            ...context,
             name,
-            mailbox,
-            dispatch,
             launch,
             destroy,
         };
 
-        return ctx;
+        return actor;
     }
 }

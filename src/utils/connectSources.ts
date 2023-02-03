@@ -3,6 +3,7 @@ import type {TEnvelope} from "../types";
 import {getMapper, getSource} from "./index";
 import {subscribe} from "./subscribe";
 import {dispatch} from "./dispatch";
+import {isEnvelope, isSystemEnvelope} from "../envelope";
 
 
 export function connectSources<S1 extends TSource, S2 extends TSource>(
@@ -33,16 +34,18 @@ function createMessageTransfer(
     target: TSource,
 ) {
     return function messageTransfer(_env: TEnvelope<any, any>) {
+        if (isSystemEnvelope(_env)) return;
+
         const env = mapper(_env);
 
-        if (env !== undefined && !transferredEnvelopes.has(env)) {
-            transferredEnvelopes.add(env);
+        if (env === undefined || transferredEnvelopes.has(env)) return;
 
-            try {
-                dispatch(target, env);
-            } catch (err) {
-                console.error(err);
-            }
+        transferredEnvelopes.add(env);
+
+        try {
+            dispatch(target, env);
+        } catch (err) {
+            console.error(err);
         }
     };
 }

@@ -1,7 +1,7 @@
-import {isSharedWorker, isWorker, CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE} from "./defs";
+import type {TConnectEnvelope, TDisconnectEnvelope, TMessagePortName} from "./types";
 import {isEnvelope} from "../envelope";
-import {TConnectEnvelope, TDisconnectEnvelope, TMessagePortName} from "./types";
 import {setMessagePort, deleteMessagePort, onMessagePortFinalize} from "./ports";
+import {isSharedWorker, isWorker, CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE} from "./defs";
 
 export function onConnectMessagePort(callback: (name: TMessagePortName) => (unknown | Function)): void {
     if (isWorker) {
@@ -10,6 +10,7 @@ export function onConnectMessagePort(callback: (name: TMessagePortName) => (unkn
 
     if (isSharedWorker) {
         (self as unknown as SharedWorkerGlobalScope).addEventListener('connect', (event: MessageEvent) => {
+            event.ports[0].start();
             event.ports[0].addEventListener('message', onMessage);
         });
     }
