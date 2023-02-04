@@ -1,19 +1,19 @@
 import {createActorFactory, TEnvelope} from "../../../main";
 import {TMailbox} from "../../../main";
 
-export const createMailbox = <In extends TEnvelope<any, any>>(): TMailbox<In> => {
-    const callbacks = new Set<(envelope: In) => unknown>();
+export const createMailbox = <T extends TEnvelope<any, any>>(): TMailbox<T> => {
+    const callbacks = new Set<(envelope: T) => unknown>();
 
     return {
-        dispatch(envelope: In) {
+        dispatch(envelope: T) {
             for (let callback of callbacks) {
                 callback(envelope);
             }
         },
-        subscribe(callback: (envelope: In) => unknown) {
+        subscribe(callback: (envelope: T) => unknown) {
             callbacks.add(callback)
         },
-        unsubscribe(callback: (envelope: In) => unknown) {
+        unsubscribe(callback: (envelope: T) => unknown) {
             callbacks.delete(callback)
         }
     }

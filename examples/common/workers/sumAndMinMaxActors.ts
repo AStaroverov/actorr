@@ -3,8 +3,8 @@ import {createActorMinMax} from "../actors/minmax/actor";
 import {onConnectMessagePort, connectActorToMessagePort} from "../../../main";
 import {SUM_RESULT_TYPE} from "../actors/sum/defs";
 
-const actorSum = createActorSum().launch();
-const actorMinMax = createActorMinMax().launch();
+const actorSum = createActorSum();
+const actorMinMax = createActorMinMax();
 
 onConnectMessagePort((name) => {
     const dis1 = connectActorToMessagePort(

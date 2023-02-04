@@ -1,4 +1,4 @@
-import {TActor, TEnvelope} from "../types";
+import {TActor, TAnyEnvelope} from "../types";
 import {createEnvelope} from "../envelope";
 import {CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE} from "./defs";
 import {connectActorToMessagePort} from "./connectActorToMessagePort";
@@ -6,7 +6,7 @@ import {TSourceWithMapper} from "../utils/types";
 import {getMapper, getSource} from "../utils";
 
 export function connectActorToWorker
-<A extends TActor<TEnvelope<any, any>>, W extends Worker | SharedWorker>
+<A extends TActor<TAnyEnvelope, TAnyEnvelope>, W extends Worker | SharedWorker>
 (_actor: A | TSourceWithMapper<A>, _worker: W | TSourceWithMapper<W>) {
     const actor = getSource(_actor);
     const worker = getSource(_worker);

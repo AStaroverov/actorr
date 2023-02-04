@@ -5,12 +5,13 @@ import {
     TMultiplyActionEnvelope,
     TMultiplyResultEnvelope
 } from "../common/actors/multiply/defs";
-import {createEnvelope, LAUNCH_TYPE} from "../../main";
+import {createEnvelope} from "../../main";
+import {LAUNCH_TYPE, TLaunchEnvelope} from "../common/defs";
 
 export function createActorMain() {
     return createActor<
-        | TMultiplyActionEnvelope
-        | TMultiplyResultEnvelope
+        TLaunchEnvelope | TMultiplyResultEnvelope,
+        TMultiplyActionEnvelope
     >('MAIN', (envelope, { dispatch }) => {
         if (envelope.type === LAUNCH_TYPE) {
             dispatch(createEnvelope(MULTIPLY_ACTION_TYPE, [3,4,5]));

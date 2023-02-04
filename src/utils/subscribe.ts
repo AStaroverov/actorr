@@ -7,8 +7,6 @@ export function subscribe<S extends TSource>(source: S, listener: TListener): Fu
     if (typeof source === 'string') {
         const port = getMessagePort(source);
         return (port === undefined) ? noop : subscribe(port, listener);
-    } else if (typeof source === 'object' && 'mailbox' in source) {
-        return subscribe(source.mailbox, listener);
     } else if (typeof source === 'object' && 'postMessage' in source) {
         const wrapper = (event: MessageEvent) => {
             if (isEnvelope(event.data)) {

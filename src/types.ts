@@ -1,13 +1,10 @@
-import {DESTROY_TYPE, LAUNCH_TYPE} from "./defs";
-
 export type TEnvelope<T extends string, P> = {
     type: T,
     payload: P,
     transferable?: undefined | Transferable[],
 }
-export type TLaunchEnvelope = TEnvelope<typeof LAUNCH_TYPE, string>;
-export type TDestroyEnvelope = TEnvelope<typeof DESTROY_TYPE, string>;
-export type TSystemEnvelope = TLaunchEnvelope | TDestroyEnvelope;
+
+export type TAnyEnvelope = TEnvelope<any, any>;
 
 export type TMailbox<T extends TEnvelope<any, any>> = {
     destroy?(): void;
@@ -16,14 +13,14 @@ export type TMailbox<T extends TEnvelope<any, any>> = {
     unsubscribe(callback: (envelope: T) => unknown): void;
 }
 
-export type TReaction<T extends TEnvelope<any, any>> =
-    (envelope: T, context: { mailbox: TMailbox<T>, dispatch: (envelope:T) => void }) => unknown;
+export type TReaction<In extends TEnvelope<any, any>, Out extends TEnvelope<any, any>> =
+    (envelope: In, context: { mailbox: TMailbox<In>, dispatch: (envelope: Out) => void }) => unknown;
 
-export type TActor<T extends TEnvelope<any, any>> = {
+export type TActor<In extends TEnvelope<any, any>, Out extends TEnvelope<any, any>> = {
     name: string;
-    mailbox: TMailbox<T>;
-    dispatch: (envelope:T) => void;
+    destroy: () => void;
 
-    launch: () => TActor<T>;
-    destroy: () => TActor<T>;
+    dispatch(envelope: In): void;
+    subscribe(callback: (envelope: Out) => unknown): void;
+    unsubscribe(callback: (envelope: Out) => unknown): void;
 };

@@ -3,7 +3,7 @@ import {createActorMultiply} from "../actors/multiply/actor";
 import {MULTIPLY_RESULT_TYPE} from "../actors/multiply/defs";
 import {SUM_ACTION_TYPE} from "../actors/sum/defs";
 
-const actor = createActorMultiply().launch();
+const actor = createActorMultiply();
 
 onConnectMessagePort((name) => {
     return connectActorToMessagePort(

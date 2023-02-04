@@ -1,8 +1,7 @@
-export type { TActor, TMailbox, TEnvelope, TLaunchEnvelope, TDestroyEnvelope } from './src/types';
+export type { TActor, TMailbox, TEnvelope } from './src/types';
 export { createEnvelope } from './src/envelope';
 export { createActorFactory } from './src/createActorFactory';
 export { connectActorToActor } from './src/connectActorToActor';
-export { LAUNCH_TYPE, DESTROY_TYPE} from './src/defs';
 
 export type { TMessagePortName } from './src/worker/types';
 export { connectActorToWorker } from './src/worker/connectActorToWorker';

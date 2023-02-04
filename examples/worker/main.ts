@@ -1,5 +1,5 @@
 import {createActorMain} from "../common/actors/main/actor";
-import {connectActorToWorker} from "../../main";
+import {connectActorToWorker, createEnvelope, LAUNCH_TYPE} from "../../main";
 import {SUM_ACTION_TYPE} from "../common/actors/sum/defs";
 import {MINMAX_ACTION_TYPE} from "../common/actors/minmax/defs";
 
@@ -15,5 +15,5 @@ connectActorToWorker(
     worker
 );
 
-actorMain.launch()
+actorMain.dispatch(createEnvelope(LAUNCH_TYPE, undefined));
 

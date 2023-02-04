@@ -6,10 +6,8 @@ import {TEnvelope} from "../../../../src/types";
 
 export function createActorMultiply() {
     return createActor<
-        | TMultiplyActionEnvelope
-        | TMultiplyResultEnvelope
-        | TSumActionEnvelope
-        | TSumResultEnvelope
+        TMultiplyActionEnvelope | TSumResultEnvelope,
+        TMultiplyResultEnvelope | TSumActionEnvelope
     >('MULTIPLY', async (envelope, { mailbox, dispatch }) => {
         if (envelope.type === MULTIPLY_ACTION_TYPE) {
             const numbers = envelope.payload;

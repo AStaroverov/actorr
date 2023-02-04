@@ -1,9 +1,8 @@
-import {createActorSum} from "../actors/sum/actor";
-import {createActorMinMax} from "../actors/minmax/actor";
-import {onConnectMessagePort, connectActorToMessagePort} from "../../../main";
 import {SUM_RESULT_TYPE} from "../actors/sum/defs";
+import {createActorSum} from "../actors/sum/actor";
+import {onConnectMessagePort, connectActorToMessagePort} from "../../../main";
 
-const actorSum = createActorSum().launch();
+const actorSum = createActorSum();
 
 onConnectMessagePort((name) => {
     return connectActorToMessagePort(

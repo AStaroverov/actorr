@@ -2,16 +2,15 @@ import type {TSumActionEnvelope, TSumResultEnvelope} from "../sum/defs";
 import type {TMinMaxActionEnvelope, TMinMaxResultEnvelope} from "../minmax/defs";
 
 import {createActor} from "../createActor";
-import {createEnvelope, LAUNCH_TYPE} from "../../../../main";
+import {createEnvelope} from "../../../../main";
 import {SUM_ACTION_TYPE, SUM_RESULT_TYPE} from "../sum/defs";
 import {MINMAX_ACTION_TYPE, MINMAX_RESULT_TYPE} from "../minmax/defs";
+import {LAUNCH_TYPE, TLaunchEnvelope} from "../../defs";
 
 export function createActorMain() {
     return createActor<
-        | TSumActionEnvelope
-        | TSumResultEnvelope
-        | TMinMaxActionEnvelope
-        | TMinMaxResultEnvelope
+        TLaunchEnvelope | TSumResultEnvelope | TMinMaxResultEnvelope,
+        TSumActionEnvelope | TMinMaxActionEnvelope
     >('MAIN', (envelope, {dispatch}) => {
         if (envelope.type === LAUNCH_TYPE) {
             dispatch(createEnvelope(SUM_ACTION_TYPE, [1,2] as [number, number]));

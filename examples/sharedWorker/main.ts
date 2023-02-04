@@ -1,6 +1,7 @@
-import {connectActorToWorker} from "../../main";
+import {connectActorToWorker, createEnvelope} from "../../main";
 import {connectWorkerToWorker} from "../../src/worker/connectWorkerToWorker";
 import {createActorMain} from "./actor";
+import {LAUNCH_TYPE} from "../common/defs";
 
 const actorMain = createActorMain();
 const sumWorker = new SharedWorker(
@@ -14,5 +15,5 @@ connectWorkerToWorker(
     { name: 'multiply worker', worker: multiplyWorker }
 );
 
-setTimeout(() => actorMain.launch(), 100);
+setTimeout(() => actorMain.dispatch(createEnvelope(LAUNCH_TYPE, undefined)), 100);
 

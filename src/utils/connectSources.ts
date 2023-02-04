@@ -3,8 +3,6 @@ import type {TEnvelope} from "../types";
 import {getMapper, getSource} from "./index";
 import {subscribe} from "./subscribe";
 import {dispatch} from "./dispatch";
-import {isEnvelope, isSystemEnvelope} from "../envelope";
-
 
 export function connectSources<S1 extends TSource, S2 extends TSource>(
     _source1: S1 | TSourceWithMapper<S1>,
@@ -15,9 +13,8 @@ export function connectSources<S1 extends TSource, S2 extends TSource>(
     const mapper1 = getMapper(_source1);
     const mapper2 = getMapper(_source2);
 
-    const transferredEnvelopes = new WeakSet<TEnvelope<any, any>>();
-    const messageTransfer1 = createMessageTransfer(transferredEnvelopes, mapper1, source2);
-    const messageTransfer2 = createMessageTransfer(transferredEnvelopes, mapper2, source1);
+    const messageTransfer1 = createMessageTransfer(mapper1, source2);
+    const messageTransfer2 = createMessageTransfer(mapper2, source1);
 
     const unsub1 = subscribe(source1, messageTransfer1);
     const unsub2 = subscribe(source2, messageTransfer2);
@@ -29,23 +26,18 @@ export function connectSources<S1 extends TSource, S2 extends TSource>(
 }
 
 function createMessageTransfer(
-    transferredEnvelopes: WeakSet<TEnvelope<any, any>>,
     mapper: (envelope: TEnvelope<any, any>) => undefined | TEnvelope<any, any>,
     target: TSource,
 ) {
     return function messageTransfer(_env: TEnvelope<any, any>) {
-        if (isSystemEnvelope(_env)) return;
-
         const env = mapper(_env);
 
-        if (env === undefined || transferredEnvelopes.has(env)) return;
-
-        transferredEnvelopes.add(env);
-
-        try {
-            dispatch(target, env);
-        } catch (err) {
-            console.error(err);
+        if (env !== undefined) {
+            try {
+                dispatch(target, env);
+            } catch (err) {
+                console.error(err);
+            }
         }
     };
 }
