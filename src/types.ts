@@ -9,17 +9,17 @@ export type TEnvelope<T extends string, P> = {
 
 export type TAnyEnvelope = TEnvelope<any, any>;
 
-export type TMailbox<T extends TEnvelope<any, any>> = {
+export type TMailbox<T extends TAnyEnvelope> = {
     destroy?(): void;
     dispatch(envelope: T): void;
     subscribe(callback: (envelope: T) => unknown): void;
     unsubscribe(callback: (envelope: T) => unknown): void;
 }
 
-export type TReaction<In extends TEnvelope<any, any>, Out extends TEnvelope<any, any>> =
+export type TReaction<In extends TAnyEnvelope, Out extends TAnyEnvelope> =
     (envelope: In, context: { mailbox: TMailbox<In>, dispatch: (envelope: Out) => void }) => unknown;
 
-export type TActor<In extends TEnvelope<any, any>, Out extends TEnvelope<any, any>> = {
+export type TActor<In extends TAnyEnvelope, Out extends TAnyEnvelope> = {
     name: string;
     destroy: () => void;
 

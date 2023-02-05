@@ -8,9 +8,9 @@ export { createActorFactory } from './src/createActorFactory';
 export { connectActorToActor } from './src/connectActorToActor';
 
 export type { TMessagePortName } from './src/worker/types';
-export { connectActorToWorker } from './src/worker/connectActorToWorker';
 export { onConnectMessagePort } from './src/worker/onConnectMessagePort';
-export { connectActorToMessagePort } from './src/worker/connectActorToMessagePort';
+export { connectActorToWorker, connectWorkerToActor } from './src/worker/connectWorker';
+export { connectMessagePortToActor, connectActorToMessagePort } from './src/worker/connectMessagePort';
 export { DISCONNECT_MESSAGE_PORT_TYPE, CONNECT_MESSAGE_PORT_TYPE } from './src/worker/defs';
 
 export { getMessagePortName } from './src/utils';
