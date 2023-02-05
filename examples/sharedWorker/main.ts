@@ -11,8 +11,8 @@ const multiplyWorker = new SharedWorker(
 
 connectActorToWorker(actorMain, multiplyWorker);
 connectWorkerToWorker(
-    { name: 'sum worker', worker: sumWorker },
-    { name: 'multiply worker', worker: multiplyWorker }
+    { name: 'SUM_WORKER', worker: sumWorker },
+    { name: 'MULTIPLY_WORKER', worker: multiplyWorker }
 );
 
 setTimeout(() => actorMain.dispatch(createEnvelope(LAUNCH_TYPE, undefined)), 100);

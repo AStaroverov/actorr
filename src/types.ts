@@ -1,7 +1,10 @@
 export type TEnvelope<T extends string, P> = {
     type: T,
     payload: P,
-    transferable?: undefined | Transferable[],
+    transferable: undefined | Transferable[],
+
+    routePassed: undefined | string;
+    routeAnnounced: undefined | string;
 }
 
 export type TAnyEnvelope = TEnvelope<any, any>;

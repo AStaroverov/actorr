@@ -1,8 +1,10 @@
 import type {TSource, TSourceWithMapper} from "./types";
-import type {TEnvelope} from "../types";
-import {getMapper, getSource} from "./index";
+import type {TAnyEnvelope, TEnvelope} from "../types";
+import {getMapper, getSource, getSourceName} from "./index";
 import {subscribe} from "./subscribe";
 import {dispatch} from "./dispatch";
+import {extendRoute, reduceRoute, routeEndsWith} from "./route";
+import {shallowCopyEnvelope} from "../envelope";
 
 export function connectSources<S1 extends TSource, S2 extends TSource>(
     _source1: S1 | TSourceWithMapper<S1>,
@@ -12,9 +14,11 @@ export function connectSources<S1 extends TSource, S2 extends TSource>(
     const source2 = getSource(_source2);
     const mapper1 = getMapper(_source1);
     const mapper2 = getMapper(_source2);
+    const name1 = getSourceName(source1);
+    const name2 = getSourceName(source2);
 
-    const messageTransfer1 = createMessageTransfer(mapper1, source2);
-    const messageTransfer2 = createMessageTransfer(mapper2, source1);
+    const messageTransfer1 = createMessageTransfer(name1, mapper1, name2, source2);
+    const messageTransfer2 = createMessageTransfer(name2, mapper2, name1, source1);
 
     const unsub1 = subscribe(source1, messageTransfer1);
     const unsub2 = subscribe(source2, messageTransfer2);
@@ -26,18 +30,43 @@ export function connectSources<S1 extends TSource, S2 extends TSource>(
 }
 
 function createMessageTransfer(
-    mapper: (envelope: TEnvelope<any, any>) => undefined | TEnvelope<any, any>,
+    sourceName: string,
+    sourceMapper: (envelope: TAnyEnvelope) => undefined | TAnyEnvelope,
+    targetName: string,
     target: TSource,
 ) {
-    return function messageTransfer(_env: TEnvelope<any, any>) {
-        const env = mapper(_env);
+    return function messageTransfer(_envelope: TEnvelope<any, any>) {
+        const envelope = sourceMapper(_envelope);
 
-        if (env !== undefined) {
-            try {
-                dispatch(target, env);
-            } catch (err) {
-                console.error(err);
-            }
+        if (envelope === undefined) return;
+
+        const isCorrectRoute = hasCorrectRoute(envelope, targetName);
+
+        if (!isCorrectRoute) return;
+
+        const copy = shallowCopyEnvelope(envelope);
+
+        copy.routePassed = extendPassedPart(copy, sourceName);
+        copy.routeAnnounced = reduceAnnouncedPart(copy, targetName);
+
+        try {
+            dispatch(target, copy);
+        } catch (err) {
+            console.error(err);
         }
     };
+}
+
+function hasCorrectRoute(envelope: TAnyEnvelope, part: string) {
+    return envelope.routeAnnounced === undefined || routeEndsWith(envelope.routeAnnounced, part);
+}
+
+function extendPassedPart(envelope: TAnyEnvelope, part: string) {
+    return extendRoute(envelope.routePassed ?? '', part);
+}
+
+function reduceAnnouncedPart(envelope: TAnyEnvelope, part: string) {
+    return envelope.routeAnnounced === undefined
+        ? undefined
+        : reduceRoute(envelope.routeAnnounced, part);
 }

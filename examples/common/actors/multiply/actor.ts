@@ -3,12 +3,14 @@ import {createEnvelope} from "../../../../src/envelope";
 import {MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE, TMultiplyActionEnvelope, TMultiplyResultEnvelope} from "./defs";
 import {SUM_ACTION_TYPE, SUM_RESULT_TYPE, TSumActionEnvelope, TSumResultEnvelope} from "../sum/defs";
 import {TEnvelope} from "../../../../src/types";
+import {createResponse} from "../../../../main";
 
 export function createActorMultiply() {
     return createActor<
         TMultiplyActionEnvelope | TSumResultEnvelope,
         TMultiplyResultEnvelope | TSumActionEnvelope
     >('MULTIPLY', async (envelope, { mailbox, dispatch }) => {
+        console.log('>>',envelope)
         if (envelope.type === MULTIPLY_ACTION_TYPE) {
             const numbers = envelope.payload;
             let result = numbers[0];
@@ -31,7 +33,9 @@ export function createActorMultiply() {
                 });
             }
 
-            dispatch(createEnvelope(MULTIPLY_RESULT_TYPE, result))
+            createResponse(dispatch, envelope)(
+                createEnvelope(MULTIPLY_RESULT_TYPE, result)
+            )
         }
 
     })

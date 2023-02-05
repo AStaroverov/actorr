@@ -3,7 +3,7 @@ import {createEnvelope} from "../envelope";
 import {CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE} from "./defs";
 import {connectActorToMessagePort} from "./connectActorToMessagePort";
 import {TSourceWithMapper} from "../utils/types";
-import {getMapper, getSource} from "../utils";
+import {getMessagePortName, getMapper, getSource} from "../utils";
 
 export function connectActorToWorker
 <A extends TActor<TAnyEnvelope, TAnyEnvelope>, W extends Worker | SharedWorker>
@@ -14,6 +14,9 @@ export function connectActorToWorker
 
     const channel = new MessageChannel();
     const localPort = channel.port1;
+    const workerPort = channel.port2;
+    const workerPortName = getMessagePortName(actor.name);
+
     const dispatchToWorker = worker instanceof SharedWorker
         ? worker.port.postMessage.bind(worker.port)
         : worker.postMessage.bind(worker);
@@ -21,11 +24,11 @@ export function connectActorToWorker
     const disconnect = connectActorToMessagePort(_actor, { source: localPort, map: mapper });
 
     localPort.start();
-    dispatchToWorker(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, actor.name), [channel.port2]);
+    dispatchToWorker(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName), [workerPort]);
 
     return () => {
         disconnect();
-        dispatchToWorker(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, actor.name));
+        dispatchToWorker(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName));
         localPort.close();
     }
 }
