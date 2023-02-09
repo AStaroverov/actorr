@@ -5,28 +5,24 @@ import {
     TMultiplyResultEnvelope
 } from "../common/actors/multiply/defs";
 import {createEnvelope, createRequest} from "../../main";
-import {LAUNCH_TYPE, TLaunchEnvelope} from "../common/defs";
+import {TLaunchEnvelope} from "../common/defs";
 import {TAnyEnvelope} from "../../src/types";
 
 export function createActorMain() {
     return createActor<
         TLaunchEnvelope | TMultiplyResultEnvelope,
         TMultiplyActionEnvelope
-    >('MAIN', (envelope, { dispatch, mailbox }) => {
-        console.log('>>', envelope)
-        if (envelope.type === LAUNCH_TYPE) {
-            // setInterval(() => {
-                const arr = Math.random() > 0.5 ? [3,4,5] : [2,3,5];
-                const isMultiplyResult = createRequest(dispatch)(createEnvelope(MULTIPLY_ACTION_TYPE, arr));
-                const callback = (envelope: TAnyEnvelope) => {
-                    if (isMultiplyResult(envelope)) {
-                        console.log('>> result', envelope.payload, arr)
-                        mailbox.unsubscribe(callback);
-                    }
-                }
+    >('MAIN', (context) => {
 
-                mailbox.subscribe(callback);
-            // }, 100)
-        }
+        // setInterval(() => {
+            const arr = Math.random() > 0.5 ? [3,4,5] : [2,3,5];
+            const request = createRequest(context);
+            const subscribe = request(createEnvelope(MULTIPLY_ACTION_TYPE, arr));
+
+            const unsubscribe = subscribe((envelope: TAnyEnvelope) => {
+                unsubscribe();
+                console.log('>> result', envelope.payload, arr)
+            })
+        // }, 100)
     })
 }

@@ -9,34 +9,33 @@ export function createActorMultiply() {
     return createActor<
         TMultiplyActionEnvelope | TSumResultEnvelope,
         TMultiplyResultEnvelope | TSumActionEnvelope
-    >('MULTIPLY', async (envelope, { mailbox, dispatch }) => {
-        console.log('>>',envelope)
-        if (envelope.type === MULTIPLY_ACTION_TYPE) {
-            const numbers = envelope.payload;
-            let result = numbers[0];
+    >('MULTIPLY', ({ subscribe, unsubscribe, dispatch }) => {
+        subscribe(async (envelope) => {
+            console.log('>>',envelope)
+            if (envelope.type === MULTIPLY_ACTION_TYPE) {
+                const numbers = envelope.payload;
+                let result = numbers[0];
 
-            for (let i = 1; i < numbers.length; i++) {
-                dispatch(
-                    createEnvelope(
-                        SUM_ACTION_TYPE,
-                        Array(numbers[i]).fill(result)
-                    )
-                );
-                result = await new Promise<number>((r) => {
-                    const cb = (envelope: TEnvelope<any, any>) => {
-                        if (envelope.type === SUM_RESULT_TYPE) {
-                            mailbox.unsubscribe(cb);
-                            r(envelope.payload);
+                for (let i = 1; i < numbers.length; i++) {
+                    dispatch(
+                        createEnvelope(
+                            SUM_ACTION_TYPE,
+                            Array(numbers[i]).fill(result)
+                        )
+                    );
+                    result = await new Promise<number>((r) => {
+                        const cb = (envelope: TEnvelope<any, any>) => {
+                            if (envelope.type === SUM_RESULT_TYPE) {
+                                unsubscribe(cb);
+                                r(envelope.payload);
+                            }
                         }
-                    }
-                    mailbox.subscribe(cb);
-                });
+                        subscribe(cb);
+                    });
+                }
+
+                createResponse(dispatch, envelope)(createEnvelope(MULTIPLY_RESULT_TYPE, result));
             }
-
-            createResponse(dispatch, envelope)(
-                createEnvelope(MULTIPLY_RESULT_TYPE, result)
-            )
-        }
-
+        })
     })
 }

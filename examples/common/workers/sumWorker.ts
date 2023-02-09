@@ -2,7 +2,7 @@ import {SUM_RESULT_TYPE} from "../actors/sum/defs";
 import {createActorSum} from "../actors/sum/actor";
 import {onConnectMessagePort, connectMessagePortToActor} from "../../../main";
 
-const actorSum = createActorSum();
+const actorSum = createActorSum().launch();
 
 onConnectMessagePort((name) => {
     return connectMessagePortToActor(

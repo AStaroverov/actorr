@@ -4,12 +4,14 @@ import {SUM_ACTION_TYPE, SUM_RESULT_TYPE, TSumActionEnvelope, TSumResultEnvelope
 import {createResponse} from "../../../../main";
 
 export function createActorSum() {
-    return createActor<TSumActionEnvelope, TSumResultEnvelope>('SUM', (envelope, { dispatch }) => {
-        if (envelope.type === SUM_ACTION_TYPE) {
-            console.log('>>',envelope)
-            createResponse(dispatch, envelope)(
-                createEnvelope(SUM_RESULT_TYPE, envelope.payload.reduce((acc, v) => acc + v, 0))
-            )
-        }
+    return createActor<TSumActionEnvelope, TSumResultEnvelope>('SUM', ({ dispatch, subscribe }) => {
+        subscribe((envelope) => {
+            if (envelope.type === SUM_ACTION_TYPE) {
+                console.log('>>',envelope)
+                createResponse(dispatch, envelope)(
+                    createEnvelope(SUM_RESULT_TYPE, envelope.payload.reduce((acc, v) => acc + v, 0))
+                )
+            }
+        })
     })
 }

@@ -1,9 +1,9 @@
-import {TActor, TEnvelope, TReaction, TMailbox} from "./types";
+import {TActor, TActorConstructor, TEnvelope, TMailbox} from "./types";
 
 export function createActorFactory(props: { getMailbox: <T extends TEnvelope<any, any>>() => TMailbox<T> }) {
     return function createActor
     <In extends TEnvelope<any, any>, Out extends TEnvelope<any, any>>
-    (name: string, reaction: TReaction<In, Out>): TActor<In, Out> {
+    (name: string, constructor: TActorConstructor<In, Out>): TActor<In, Out> {
         const mailboxIn = props.getMailbox<In>();
         const mailboxOut = props.getMailbox<Out>();
 
@@ -12,19 +12,33 @@ export function createActorFactory(props: { getMailbox: <T extends TEnvelope<any
             throw new Error('getMailbox should return different instances');
         }
 
-        const context = { dispatch: mailboxOut.dispatch.bind(mailboxOut), mailbox: mailboxIn };
-        const subscriber = (envelope: In) => reaction(envelope, context);
-        const destroy = () => mailboxIn.unsubscribe(subscriber);
+        let dispose: unknown | Function;
 
-        mailboxIn.subscribe(subscriber);
+        const launch = () => {
+            dispose = constructor({
+                dispatch: mailboxOut.dispatch.bind(mailboxOut),
+                subscribe: mailboxIn.subscribe.bind(mailboxIn),
+                unsubscribe: mailboxIn.unsubscribe.bind(mailboxIn)
+            });
+            return actor;
+        }
 
-        return {
+        const destroy = () => {
+            mailboxIn.destroy?.();
+            mailboxOut.destroy?.();
+            typeof dispose === 'function' && dispose();
+        }
+
+        const actor = {
             name,
+            launch,
             destroy,
 
             dispatch: mailboxIn.dispatch.bind(mailboxIn),
             subscribe: mailboxOut.subscribe.bind(mailboxOut),
             unsubscribe: mailboxOut.unsubscribe.bind(mailboxOut),
-        };
+        }
+
+        return actor;
     }
 }

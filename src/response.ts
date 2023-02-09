@@ -1,4 +1,4 @@
-import type {TAnyEnvelope} from "./types";
+import type {TAnyEnvelope, TDispatcher} from "./types";
 
 export function createResponseEnvelope<T extends TAnyEnvelope>(
     envelope: T,
@@ -8,6 +8,6 @@ export function createResponseEnvelope<T extends TAnyEnvelope>(
     return envelope;
 }
 
-export function createResponse<T extends TAnyEnvelope>(dispatch: (envelope: T) => void, requester: TAnyEnvelope) {
+export function createResponse<T extends TAnyEnvelope>(dispatch: TDispatcher<T>, requester: TAnyEnvelope) {
     return (envelope: T) => dispatch(createResponseEnvelope<T>(envelope, requester))
 }
