@@ -3,7 +3,7 @@ import {createEnvelope} from "../../../../src/envelope";
 import {MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE, TMultiplyActionEnvelope, TMultiplyResultEnvelope} from "./defs";
 import {SUM_ACTION_TYPE, SUM_RESULT_TYPE, TSumActionEnvelope, TSumResultEnvelope} from "../sum/defs";
 import {TEnvelope} from "../../../../src/types";
-import {createResponse} from "../../../../main";
+import {responseFactory} from "../../../../main";
 
 export function createActorMultiply() {
     return createActor<
@@ -34,7 +34,7 @@ export function createActorMultiply() {
                     });
                 }
 
-                createResponse(dispatch, envelope)(createEnvelope(MULTIPLY_RESULT_TYPE, result));
+                responseFactory(dispatch, envelope)(createEnvelope(MULTIPLY_RESULT_TYPE, result));
             }
         })
     })

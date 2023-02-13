@@ -4,7 +4,7 @@ import {
     TMultiplyActionEnvelope,
     TMultiplyResultEnvelope
 } from "../common/actors/multiply/defs";
-import {createEnvelope, createRequest} from "../../main";
+import {createEnvelope, requestFactory} from "../../main";
 import {TLaunchEnvelope} from "../common/defs";
 import {TAnyEnvelope} from "../../src/types";
 
@@ -13,16 +13,11 @@ export function createActorMain() {
         TLaunchEnvelope | TMultiplyResultEnvelope,
         TMultiplyActionEnvelope
     >('MAIN', (context) => {
-
-        // setInterval(() => {
-            const arr = Math.random() > 0.5 ? [3,4,5] : [2,3,5];
-            const request = createRequest(context);
-            const subscribe = request(createEnvelope(MULTIPLY_ACTION_TYPE, arr));
-
-            const unsubscribe = subscribe((envelope: TAnyEnvelope) => {
-                unsubscribe();
-                console.log('>> result', envelope.payload, arr)
-            })
-        // }, 100)
+        const arr = Math.random() > 0.5 ? [3,4,5] : [2,3,5];
+        const request = requestFactory(context);
+        const unsubscribe = request(createEnvelope(MULTIPLY_ACTION_TYPE, arr), (envelope: TAnyEnvelope) => {
+            unsubscribe();
+            console.log('>> result', envelope.payload, arr)
+        });
     })
 }

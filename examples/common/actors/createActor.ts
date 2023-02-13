@@ -6,7 +6,8 @@ export const createMailbox = <T extends TEnvelope<any, any>>(): TMailbox<T> => {
 
     return {
         dispatch(envelope: T) {
-            for (let callback of callbacks) {
+            const current = Array.from(callbacks);
+            for (let callback of current) {
                 callback(envelope);
             }
         },

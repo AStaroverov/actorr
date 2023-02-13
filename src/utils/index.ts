@@ -24,3 +24,7 @@ export function getSourceName<S extends TSource>(source: S) {
 export function getMessagePortName(base: string) {
     return `MessagePort(${base})`;
 }
+
+export function getShortRandomString() {
+    return Math.round(Math.random() * Date.now()).toString(32);
+}

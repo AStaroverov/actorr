@@ -1,13 +1,19 @@
 import type {TAnyEnvelope, TDispatcher} from "./types";
+import {getFirstRoutePart} from "./utils/route";
 
-export function createResponseEnvelope<T extends TAnyEnvelope>(
-    envelope: T,
-    source: TAnyEnvelope,
-): T {
-    envelope.routeAnnounced = source.routePassed;
-    return envelope;
+export function getDefaultResponseName(request: TAnyEnvelope): string {
+    return getFirstRoutePart(request.routePassed!).replace('Request', 'Response');
 }
 
-export function createResponse<T extends TAnyEnvelope>(dispatch: TDispatcher<T>, requester: TAnyEnvelope) {
-    return (envelope: T) => dispatch(createResponseEnvelope<T>(envelope, requester))
+export function createResponseFactory<T extends TAnyEnvelope>(dispatch: TDispatcher<T>) {
+    return function createResponse(requester: TAnyEnvelope, name = getDefaultResponseName(requester)) {
+        const routeAnnounced = requester.routePassed;
+
+        return function response(envelope: T) {
+            envelope.routePassed = name;
+            envelope.routeAnnounced = routeAnnounced;
+
+            return dispatch(envelope);
+        }
+    }
 }

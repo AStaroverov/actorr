@@ -16,6 +16,7 @@ export function createActorFactory(props: { getMailbox: <T extends TEnvelope<any
 
         const launch = () => {
             dispose = constructor({
+                name,
                 dispatch: mailboxOut.dispatch.bind(mailboxOut),
                 subscribe: mailboxIn.subscribe.bind(mailboxIn),
                 unsubscribe: mailboxIn.unsubscribe.bind(mailboxIn)

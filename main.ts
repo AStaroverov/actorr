@@ -1,9 +1,9 @@
-import {createRequest} from "./src/request";
+import {requestFactory} from "./src/request";
 
 export type { TActor, TMailbox, TEnvelope } from './src/types';
 export { createEnvelope, shallowCopyEnvelope } from './src/envelope';
-export { createRequest } from './src/request';
-export { createResponse, createResponseEnvelope } from './src/response';
+export { requestFactory } from './src/request';
+export { createResponseFactory } from './src/response';
 export { createActorFactory } from './src/createActorFactory';
 export { connectActorToActor } from './src/connectActorToActor';
 

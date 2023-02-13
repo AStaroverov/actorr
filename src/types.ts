@@ -20,6 +20,7 @@ export type TMailbox<T extends TAnyEnvelope> = {
 }
 
 export type TActorContext<In extends TAnyEnvelope, Out extends TAnyEnvelope> = {
+    name: string;
     dispatch: TMailbox<Out>["dispatch"],
     subscribe: TMailbox<In>["subscribe"],
     unsubscribe: TMailbox<In>["unsubscribe"],
@@ -37,3 +38,5 @@ export type TActor<In extends TAnyEnvelope, Out extends TAnyEnvelope> = {
     subscribe: (callback: (envelope: Out) => unknown) => void;
     unsubscribe: (callback: (envelope: Out) => unknown) => void;
 };
+
+export type TLikeActor = Pick<TActor<TAnyEnvelope, TAnyEnvelope>, 'name' | 'dispatch' | 'subscribe' | 'unsubscribe'>;
