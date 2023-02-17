@@ -5,6 +5,7 @@ import {subscribe} from "./subscribe";
 import {dispatch} from "./dispatch";
 import {extendRoute, reduceRoute, routeEndsWith} from "./route";
 import {shallowCopyEnvelope} from "../envelope";
+import {isSystemEnvelope} from "./isSystemEnvelope";
 
 export function connectSources<S1 extends TSource, S2 extends TSource>(
     _source1: S1 | TSourceWithMapper<S1>,
@@ -36,7 +37,7 @@ function createMessageTransfer(
     target: TSource,
 ) {
     return function messageTransfer(_envelope: TEnvelope<any, any>) {
-        const envelope = sourceMapper(_envelope);
+        const envelope = isSystemEnvelope(_envelope) ? _envelope : sourceMapper(_envelope);
 
         if (envelope === undefined) return;
 

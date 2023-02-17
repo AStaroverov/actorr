@@ -1,7 +1,16 @@
 import type {TSource, TSourceWithMapper} from "./types";
 
-export const noop = (): any => {};
 export const identity = <T = any>(v: T) => v;
+export const noop = (): any => {};
+export const once = <T extends (...args: any[]) => void>(fn: T): T => {
+    return <T>((...args: any[]) => {
+        if (fn !== undefined) {
+            fn.apply(null, args);
+            // @ts-ignore
+            fn = undefined;
+        }
+    });
+}
 
 export function getSource<S>(source: S | TSourceWithMapper<S>) {
     return typeof source === 'object' && 'source' in source! ? source.source : source;

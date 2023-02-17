@@ -20,8 +20,10 @@ export function createActorMain() {
 
         const closeRandomChannel = openChannel(
             createEnvelope(GENERATE_RANDOM_TYPE, undefined),
-            (dispatch, close) => (envelope: TAnyEnvelope) => {
-                console.log('>> Random number', envelope.payload)
+            (dispatch, subscribe, close) => {
+                return subscribe((envelope: TAnyEnvelope) => {
+                    console.log('>> Random number', envelope.payload)
+                })
             }
         );
 
@@ -29,13 +31,15 @@ export function createActorMain() {
 
         const closePingPongChannel = openChannel<TPingEnvelope, TPongEnvelope>(
             createEnvelope(OPEN_CHANNEL_TYPE, 1),
-            (dispatch, close) => (envelope) => {
-                console.log('>> ping', envelope.type, envelope.payload)
-                if (envelope.payload >= 4) {
-                    console.log('>> close ping pong', envelope);
-                    close();
-                }
-                setTimeout(() => dispatch(createEnvelope(PONG_TYPE, envelope.payload + 1)), 1000)
+            (dispatch, subscribe, close) => {
+                return subscribe(envelope => {
+                    console.log('>> ping', envelope.type, envelope.payload)
+                    if (envelope.payload >= 4) {
+                        console.log('>> close ping pong', envelope);
+                        close();
+                    }
+                    setTimeout(() => dispatch(createEnvelope(PONG_TYPE, envelope.payload + 1)), 1000)
+                })
             }
         )
     })

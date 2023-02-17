@@ -1,5 +1,9 @@
 import type {TAnyEnvelope, TEnvelope} from "./types";
 
+export function isEnvelope<T extends TEnvelope<any, any>>(some: any): some is T {
+    return typeof some === 'object' && typeof some.type === 'string';
+}
+
 export function createEnvelope<T extends string, P>(
     type: T,
     payload: P,
@@ -13,8 +17,3 @@ export function shallowCopyEnvelope<T extends TAnyEnvelope>(
 ): T {
     return Object.assign({}, envelope);
 }
-
-export function isEnvelope<T extends TEnvelope<any, any>>(some: any): some is T {
-    return typeof some === 'object' && typeof some.type === 'string';
-}
-
