@@ -1,28 +1,25 @@
-import type {TSource, TSourceWithMapper} from "./types";
-import type {TAnyEnvelope, TEnvelope} from "../types";
-import {getMapper, getSource, getSourceName} from "./index";
-import {subscribe} from "./subscribe";
+import type {TAnyEnvelope, TEnvelope, TEnvelopeTransmitterWithMapper, TEnvelopeTransmitter} from "./types";
+import {getMapper, getEnvelopeTransmitter, getName} from "./utils";
+import {createSubscribe} from "./subscribe";
 import {dispatch} from "./dispatch";
 import {extendRoute, reduceRoute, routeEndsWith} from "./route";
-import {shallowCopyEnvelope} from "../envelope";
+import {shallowCopyEnvelope} from "./envelope";
 import {isSystemEnvelope} from "./isSystemEnvelope";
 
-export function connectSources<S1 extends TSource, S2 extends TSource>(
-    _source1: S1 | TSourceWithMapper<S1>,
-    _source2: S2 | TSourceWithMapper<S2>
-) {
-    const source1 = getSource(_source1);
-    const source2 = getSource(_source2);
-    const mapper1 = getMapper(_source1);
-    const mapper2 = getMapper(_source2);
-    const name1 = getSourceName(source1);
-    const name2 = getSourceName(source2);
-
-    const messageTransfer1 = createMessageTransfer(name1, mapper1, name2, source2);
-    const messageTransfer2 = createMessageTransfer(name2, mapper2, name1, source1);
-
-    const unsub1 = subscribe(source1, messageTransfer1);
-    const unsub2 = subscribe(source2, messageTransfer2);
+export function connectEnvelopeTransmitter<T1 extends TEnvelopeTransmitter, T2 extends TEnvelopeTransmitter>(
+    _transmitter1: T1 | TEnvelopeTransmitterWithMapper<T1>,
+    _transmitter2: T2 | TEnvelopeTransmitterWithMapper<T2>
+): Function {
+    const transmitter1 = getEnvelopeTransmitter(_transmitter1);
+    const transmitter2 = getEnvelopeTransmitter(_transmitter2);
+    const mapper1 = getMapper(_transmitter1);
+    const mapper2 = getMapper(_transmitter2);
+    const name1 = getName(transmitter1);
+    const name2 = getName(transmitter2);
+    const unsub1 = createSubscribe(transmitter1)(
+        createRedispatch(name1, mapper1, name2, transmitter2), true);
+    const unsub2 = createSubscribe(transmitter2)(
+        createRedispatch(name2, mapper2, name1, transmitter1), true);
 
     return () => {
         unsub1();
@@ -30,13 +27,13 @@ export function connectSources<S1 extends TSource, S2 extends TSource>(
     }
 }
 
-function createMessageTransfer(
+function createRedispatch(
     sourceName: string,
     sourceMapper: (envelope: TAnyEnvelope) => undefined | TAnyEnvelope,
     targetName: string,
-    target: TSource,
+    target: TEnvelopeTransmitter,
 ) {
-    return function messageTransfer(_envelope: TEnvelope<any, any>) {
+    return function redispatch(_envelope: TEnvelope<any, any>) {
         const envelope = isSystemEnvelope(_envelope) ? _envelope : sourceMapper(_envelope);
 
         if (envelope === undefined) return;
@@ -53,7 +50,7 @@ function createMessageTransfer(
         try {
             dispatch(target, copy);
         } catch (err) {
-            console.error(err);
+            console.error(new Error('Error on dispatch envelope', { cause: err }));
         }
     };
 }

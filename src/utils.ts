@@ -1,4 +1,4 @@
-import type {TSource, TSourceWithMapper} from "./types";
+import {TEnvelopeTransmitter, TEnvelopeTransmitterWithMapper} from "./types";
 
 export const identity = <T = any>(v: T) => v;
 export const noop = (): any => {};
@@ -12,15 +12,17 @@ export const once = <T extends (...args: any[]) => void>(fn: T): T => {
     });
 }
 
-export function getSource<S>(source: S | TSourceWithMapper<S>) {
-    return typeof source === 'object' && 'source' in source! ? source.source : source;
+export function getEnvelopeTransmitter<T>(envelopeTransfer: T | TEnvelopeTransmitterWithMapper<T>) {
+    return typeof envelopeTransfer === 'object' && 'ref' in envelopeTransfer!
+        ? envelopeTransfer.ref
+        : envelopeTransfer;
 }
 
-export function getMapper<S>(source: S | TSourceWithMapper<S>) {
-    return (typeof source === 'object' && 'source' in source! ? source.map : undefined) ?? identity;
+export function getMapper<T>(source: T | TEnvelopeTransmitterWithMapper<T>) {
+    return (typeof source === 'object' && 'ref' in source! ? source.map : undefined) ?? identity;
 }
 
-export function getSourceName<S extends TSource>(source: S) {
+export function getName<T extends TEnvelopeTransmitter>(source: T) {
     if (typeof source === 'string') return source;
     if (typeof source === 'object') {
         if ('name' in source) return source.name;

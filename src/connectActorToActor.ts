@@ -1,9 +1,9 @@
-import type {TActor, TAnyEnvelope, TLikeActor} from "./types";
-import type {TSourceWithMapper} from "./utils/types";
-import {connectSources} from "./utils/connectSources";
+import type {TLikeActor, TEnvelopeTransmitterWithMapper} from "./types";
+import {connectEnvelopeTransmitter} from "./connectEnvelopeTransmitter";
 
-export function connectActorToActor
-<A extends TLikeActor, B extends TLikeActor>
-(_actor1: A | TSourceWithMapper<A>, _actor2: B | TSourceWithMapper<B>) {
-    return connectSources(_actor1, _actor2);
+export function connectActorToActor<A extends TLikeActor, B extends TLikeActor>(
+    actor1: A | TEnvelopeTransmitterWithMapper<A>,
+    actor2: B | TEnvelopeTransmitterWithMapper<B>
+) {
+    return connectEnvelopeTransmitter(actor1, actor2);
 }

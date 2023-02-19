@@ -1,7 +1,7 @@
-import {createActorFactory, TEnvelope} from "../../../main";
-import {TMailbox} from "../../../main";
+import type {TAnyEnvelope, TMailbox} from "../../../main";
+import {createActorFactory} from "../../../main";
 
-export const createMailbox = <T extends TEnvelope<any, any>>(): TMailbox<T> => {
+export const createMailbox = <T extends TAnyEnvelope>(): TMailbox<T> => {
     const callbacks = new Set<(envelope: T) => unknown>();
 
     return {
@@ -13,10 +13,8 @@ export const createMailbox = <T extends TEnvelope<any, any>>(): TMailbox<T> => {
         },
         subscribe(callback: (envelope: T) => unknown) {
             callbacks.add(callback)
+            return () => callbacks.delete(callback);
         },
-        unsubscribe(callback: (envelope: T) => unknown) {
-            callbacks.delete(callback)
-        }
     }
 }
 export const createActor = createActorFactory({ getMailbox: () => createMailbox() });

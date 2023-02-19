@@ -7,6 +7,6 @@ const actorSum = createActorSum().launch();
 onConnectMessagePort((name) => {
     return connectMessagePortToActor(
         name,
-        { source: actorSum, map: (envelope) => envelope.type === SUM_RESULT_TYPE ? envelope : undefined },
+        { ref: actorSum, map: (envelope) => envelope.type === SUM_RESULT_TYPE ? envelope : undefined },
     );
 });

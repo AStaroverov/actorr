@@ -8,13 +8,13 @@ const actor = createActorMultiply().launch();
 onConnectMessagePort((name) => {
     if (getMessagePortName('MAIN') === name) {
         return connectMessagePortToActor(
-            { source: name, map: (envelope) => {
+            { ref: name, map: (envelope) => {
                     switch (envelope.type) {
                         case MULTIPLY_ACTION_TYPE: return envelope;
                         default: return undefined;
                     }
                 } },
-            { source: actor, map: (envelope) => {
+            { ref: actor, map: (envelope) => {
                 switch (envelope.type) {
                     case MULTIPLY_RESULT_TYPE: return envelope;
                     default: return undefined;
@@ -25,13 +25,13 @@ onConnectMessagePort((name) => {
 
     if (getMessagePortName('SUM_WORKER') === name) {
         return connectMessagePortToActor(
-            { source: name, map: (envelope) => {
+            { ref: name, map: (envelope) => {
                 switch (envelope.type) {
                     case SUM_RESULT_TYPE: return envelope;
                     default: return undefined;
                 }
             } },
-            { source: actor, map: (envelope) => {
+            { ref: actor, map: (envelope) => {
                 switch (envelope.type) {
                     case SUM_ACTION_TYPE: return envelope;
                     default: return undefined;

@@ -1,39 +1,43 @@
-import {TActorContext, TAnyEnvelope, TDispatcher, TSubscribeCallback, TSubscriber} from "../types";
+import {
+    TActorContext,
+    TAnyEnvelope,
+    TDispatch,
+    TSubscribe,
+} from "../types";
 import {requestFactory} from "../request";
 import {createResponseFactory} from "../response";
 import {CHANNEL_CLOSE_TYPE, TChannelCloseEnvelope} from "./defs";
 import {createEnvelope} from "../envelope";
 import {noop, once} from "../utils";
-import {createSubscribe} from "../utils/subscribe";
-import {isSystemEnvelope} from "../utils/isSystemEnvelope";
+import {TOpenChanelContext} from "./types";
 
 export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEnvelope>(context: TActorContext<_In, _Out>) {
     const request = requestFactory(context);
     const createResponse = createResponseFactory(context.dispatch);
-    const subscribeToContext = createSubscribe(context);
 
     return function openChannel<In extends _In, Out extends _Out>(
         envelope: _Out,
-        onOpen: (dispatch: TDispatcher<Out>, subscribe: TSubscriber<In>, close: VoidFunction) => void | Function
+        onOpen: (context: TOpenChanelContext<In, Out>) => void | Function
     ) {
-        const closeMap = new Map<string, Function>();
-        const disposeMap = new Map<string, Function>();
+        const mapClose = new Map<string, Function>();
+        const mapDispose = new Map<string, Function>();
 
-        const createCloseChannel = (route: string, dispatch: TDispatcher<Out>) =>
+        const createCloseChannel = (route: string, dispatch: TDispatch<Out>) =>
             once(() => {
-                disposeMap.has(route) && disposeMap.get(route)!();
+                mapDispose.has(route) && mapDispose.get(route)!();
 
-                closeMap.delete(route);
-                disposeMap.delete(route);
+                mapClose.delete(route);
+                mapDispose.delete(route);
 
                 dispatch(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
             });
 
-        const createSubscribeToChannel = (route: string) =>
-            (callback: TSubscribeCallback<In>) =>
-                subscribeToContext((envelope) => {
-                    if (envelope.routePassed === route && !isSystemEnvelope(envelope)) callback(envelope as In)
-                });
+        const createSubscribeToChannel = (route: string): TSubscribe<In> =>
+            (callback, withSystemEnvelopes) =>
+                context.subscribe(
+                    (envelope) => envelope.routePassed === route && callback(envelope as In),
+                    withSystemEnvelopes
+                );
 
 
         const closeRequestResponse = request<_Out, In>(envelope, (envelope: TChannelCloseEnvelope) => {
@@ -43,32 +47,31 @@ export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEn
                 return;
             }
 
-            if (envelope.type === CHANNEL_CLOSE_TYPE && disposeMap.has(channelRoute)) {
-                closeMap.has(channelRoute) && closeMap.get(channelRoute)!();
+            if (envelope.type === CHANNEL_CLOSE_TYPE) {
+                mapClose.has(channelRoute) && mapClose.get(channelRoute)!();
                 return;
             }
 
-            if (!disposeMap.has(channelRoute)) {
+            if (!mapDispose.has(channelRoute)) {
                 const dispatch = createResponse(envelope);
-                const subscribe = createSubscribeToChannel(channelRoute)
-                const closeChannel = createCloseChannel(channelRoute, dispatch)
-                const disposeChannel = onOpen(dispatch, subscribe, closeChannel);
+                const subscribe = createSubscribeToChannel(channelRoute);
+                const close = createCloseChannel(channelRoute, dispatch);
+                const dispose = onOpen({dispatch, subscribe, close});
 
-                closeMap.set(channelRoute, closeChannel);
-                disposeMap.set(channelRoute, disposeChannel ?? noop);
+                mapClose.set(channelRoute, close);
+                mapDispose.set(channelRoute, dispose ?? noop);
             }
         })
 
         return function closeOpenedChannels() {
-            console.log('>> close all',)
             closeRequestResponse();
 
-            for (const close of closeMap.values()) {
+            for (const close of mapClose.values()) {
                 close();
             }
 
-            closeMap.clear();
-            disposeMap.clear();
+            mapClose.clear();
+            mapDispose.clear();
         }
     }
 }

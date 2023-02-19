@@ -1,6 +1,6 @@
 import {requestFactory} from "./src/request";
 
-export type { TActor, TMailbox, TEnvelope } from './src/types';
+export type { TActor, TMailbox, TEnvelope, TAnyEnvelope } from './src/types';
 export { createEnvelope, shallowCopyEnvelope } from './src/envelope';
 export { requestFactory } from './src/request';
 export { createResponseFactory } from './src/response';

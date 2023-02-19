@@ -1,4 +1,5 @@
-import {TActor, TActorConstructor, TEnvelope, TMailbox} from "./types";
+import {TActor, TActorConstructor, TDispatch, TEnvelope, TMailbox} from "./types";
+import {createSubscribe} from "./subscribe";
 
 export function createActorFactory(props: { getMailbox: <T extends TEnvelope<any, any>>() => TMailbox<T> }) {
     return function createActor
@@ -17,9 +18,8 @@ export function createActorFactory(props: { getMailbox: <T extends TEnvelope<any
         const launch = () => {
             dispose = constructor({
                 name,
-                dispatch: mailboxOut.dispatch.bind(mailboxOut),
-                subscribe: mailboxIn.subscribe.bind(mailboxIn),
-                unsubscribe: mailboxIn.unsubscribe.bind(mailboxIn)
+                dispatch: mailboxOut.dispatch.bind(mailboxOut) as TDispatch<Out>,
+                subscribe: createSubscribe(mailboxIn),
             });
             return actor;
         }
@@ -35,9 +35,8 @@ export function createActorFactory(props: { getMailbox: <T extends TEnvelope<any
             launch,
             destroy,
 
-            dispatch: mailboxIn.dispatch.bind(mailboxIn),
-            subscribe: mailboxOut.subscribe.bind(mailboxOut),
-            unsubscribe: mailboxOut.unsubscribe.bind(mailboxOut),
+            dispatch: mailboxIn.dispatch.bind(mailboxIn) as TDispatch<In>,
+            subscribe: createSubscribe(mailboxOut)
         }
 
         return actor;

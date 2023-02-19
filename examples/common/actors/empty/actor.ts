@@ -4,9 +4,8 @@ import type {TMinMaxActionEnvelope, TMinMaxResultEnvelope} from "../minmax/defs"
 import {createActor} from "../createActor";
 import {connectActorToActor, TActor} from "../../../../main";
 import {TLaunchEnvelope} from "../../defs";
-import {TAnyEnvelope} from "../../../../src/types";
 
-export function createEmptyActor(createdNestedActors: () => TActor<TAnyEnvelope, TAnyEnvelope>[]) {
+export function createEmptyActor(createdNestedActors: () => TActor[]) {
     return createActor<
         TLaunchEnvelope | TSumResultEnvelope | TMinMaxResultEnvelope,
         TSumActionEnvelope | TMinMaxActionEnvelope

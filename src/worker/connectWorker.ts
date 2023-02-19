@@ -1,15 +1,15 @@
-import {TActor, TAnyEnvelope} from "../types";
+import {TActor, TAnyEnvelope, TEnvelopeTransmitterWithMapper} from "../types";
 import {createEnvelope} from "../envelope";
 import {CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE} from "./defs";
 import {connectActorToMessagePort} from "./connectMessagePort";
-import {TSourceWithMapper} from "../utils/types";
-import {getMessagePortName, getMapper, getSource} from "../utils";
+import {getMessagePortName, getMapper, getEnvelopeTransmitter} from "../utils";
 
-export function connectActorToWorker
-<A extends TActor<TAnyEnvelope, TAnyEnvelope>, W extends Worker | SharedWorker>
-(_actor: A | TSourceWithMapper<A>, _worker: W | TSourceWithMapper<W>) {
-    const actor = getSource(_actor);
-    const worker = getSource(_worker);
+export function connectActorToWorker<A extends TActor, W extends Worker | SharedWorker>(
+    _actor: A | TEnvelopeTransmitterWithMapper<A>,
+    _worker: W | TEnvelopeTransmitterWithMapper<W>
+) {
+    const actor = getEnvelopeTransmitter(_actor);
+    const worker = getEnvelopeTransmitter(_worker);
     const mapper = getMapper(_worker);
 
     const channel = new MessageChannel();
@@ -21,7 +21,7 @@ export function connectActorToWorker
         ? worker.port.postMessage.bind(worker.port)
         : worker.postMessage.bind(worker);
 
-    const disconnect = connectActorToMessagePort(_actor, { source: localPort, map: mapper });
+    const disconnect = connectActorToMessagePort(_actor, { ref: localPort, map: mapper });
 
     localPort.start();
     dispatchToWorker(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName), [workerPort]);
@@ -35,6 +35,6 @@ export function connectActorToWorker
 
 export function connectWorkerToActor
 <A extends TActor<TAnyEnvelope, TAnyEnvelope>, W extends Worker | SharedWorker>
-(_worker: W | TSourceWithMapper<W>,_actor: A | TSourceWithMapper<A>) {
+(_worker: W | TEnvelopeTransmitterWithMapper<W>, _actor: A | TEnvelopeTransmitterWithMapper<A>) {
     return connectActorToWorker(_actor, _worker);
 }

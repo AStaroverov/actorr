@@ -15,11 +15,11 @@ export function requestFactory<_Out extends TAnyEnvelope, _In extends TAnyEnvelo
         const subscriber = (envelope: TAnyEnvelope) => {
             if (isResponse(envelope)) callback(envelope);
         }
+        const unsubscribe = context.subscribe(subscriber, true);
 
         copy.routePassed = name;
-        context.subscribe(subscriber);
         context.dispatch(copy);
 
-        return () => context.unsubscribe(subscriber);
+        return unsubscribe;
     }
 }

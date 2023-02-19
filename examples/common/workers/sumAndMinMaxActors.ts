@@ -9,7 +9,7 @@ const actorMinMax = createActorMinMax();
 onConnectMessagePort((name) => {
     const dis1 = connectMessagePortToActor(
         name,
-        { source: actorSum, map: (envelope) => envelope.type === SUM_RESULT_TYPE ? envelope : undefined },
+        { ref: actorSum, map: (envelope) => envelope.type === SUM_RESULT_TYPE ? envelope : undefined },
     );
     const dis2 = connectMessagePortToActor(name, actorMinMax);
 

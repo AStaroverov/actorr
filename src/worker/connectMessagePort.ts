@@ -1,17 +1,18 @@
-import {TMessagePortName} from "./types";
-import {TActor, TAnyEnvelope} from "../types";
-import {TSourceWithMapper} from "../utils/types";
-import {connectSources} from "../utils/connectSources";
+import type {TActor, TEnvelopeTransmitterWithMapper} from "../types";
+import type {TMessagePortName} from "./types";
+import {connectEnvelopeTransmitter} from "../connectEnvelopeTransmitter";
 
-export function connectActorToMessagePort
-<A extends TActor<TAnyEnvelope, TAnyEnvelope>, P extends MessagePort | TMessagePortName>
-(actor: A | TSourceWithMapper<A>, port: P | TSourceWithMapper<P>): VoidFunction {
-    return connectSources(actor, port)
+export function connectActorToMessagePort<A extends TActor, P extends MessagePort | TMessagePortName>(
+    actor: A | TEnvelopeTransmitterWithMapper<A>,
+    port: P | TEnvelopeTransmitterWithMapper<P>
+): Function {
+    return connectEnvelopeTransmitter(actor, port)
 }
 
-export function connectMessagePortToActor
-<A extends TActor<TAnyEnvelope, TAnyEnvelope>, P extends MessagePort | TMessagePortName>
-(port: P | TSourceWithMapper<P>, actor: A | TSourceWithMapper<A>): VoidFunction {
+export function connectMessagePortToActor<A extends TActor, P extends MessagePort | TMessagePortName>(
+    port: P | TEnvelopeTransmitterWithMapper<P>,
+    actor: A | TEnvelopeTransmitterWithMapper<A>
+): Function {
     return connectActorToMessagePort(actor, port);
 }
 
