@@ -17,17 +17,20 @@ export function createPingPongActor(delay: number) {
                 const close = supportChannel<TPongEnvelope, TPingEnvelope>(envelope, (ctx) => {
                     ctx.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1));
 
-                    const closePing = createHeartbeat('PING_PONG', ctx, () => {
-                        console.log('>> PANIC PING_PONG CHANNEL')
+                    const closePing = createHeartbeat(ctx, () => {
+                        console.log('>> Channel requester dont response');
                     });
+
+                    let pingTimeoutId: undefined | number = undefined;
                     const closeReaction = ctx.subscribe((envelope) => {
                         console.log('>>', delay, envelope.type, envelope.payload)
-                        setTimeout(() => ctx.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1)), delay);
+                        pingTimeoutId = setTimeout(() => ctx.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1)), delay);
                     });
 
                     return () => {
                         closePing();
                         closeReaction();
+                        clearTimeout(pingTimeoutId);
                     }
                 })
             }

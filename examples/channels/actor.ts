@@ -31,22 +31,26 @@ export function createActorMain() {
         const closePingPongChannel = openChannel<TPingEnvelope, TPongEnvelope>(
             createEnvelope(OPEN_CHANNEL_TYPE, 1),
             (context) => {
-                const closePing = createHeartbeat('MAIN', context, () => {
-                    console.log('>> PANIC MAIN CHANNEL')
+                debugger
+                const closePing = createHeartbeat(context, () => {
+                    console.log('>> Channel supporter dont response');
+                    context.close();
                 });
+
+                let pongTimeoutId: undefined | number = undefined;
                 const closeReaction = context.subscribe(envelope => {
                     console.log('>> foo', envelope.type, envelope.payload)
                     if (envelope.payload >= 4) {
                         console.log('>> close foobar', envelope);
-                        close();
+                        context.close();
                     }
-                    setTimeout(() => context.dispatch(createEnvelope(PONG_TYPE, envelope.payload + 1)), 1000)
+                    pongTimeoutId = setTimeout(() => context.dispatch(createEnvelope(PONG_TYPE, envelope.payload + 1)), 1000)
                 });
-
 
                 return () => {
                     closePing();
                     closeReaction();
+                    clearTimeout(pongTimeoutId);
                 }
             }
         )
