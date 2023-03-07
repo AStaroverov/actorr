@@ -1,5 +1,5 @@
-import {TEnvelope} from "../types";
-import {CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE} from "./defs";
+import { TEnvelope } from '../types';
+import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
 
 export type TMessagePortName = string;
 export type TConnectEnvelope = TEnvelope<typeof CONNECT_MESSAGE_PORT_TYPE, string>;

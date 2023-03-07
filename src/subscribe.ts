@@ -1,18 +1,11 @@
-import {getMessagePort} from "./worker/ports";
-import {isEnvelope} from "./envelope";
-import {noop} from "./utils";
-import {
-    TAnyEnvelope,
-    TSubscribe,
-    TSubscribeCallback,
-    TEnvelopeSubscribeSource,
-} from "./types";
-import {isSystemEnvelope} from "./isSystemEnvelope";
+import { getMessagePort } from './worker/ports';
+import { isEnvelope } from './envelope';
+import { noop } from './utils';
+import { TAnyEnvelope, TSubscribe, TSubscribeCallback, TEnvelopeSubscribeSource } from './types';
+import { isSystemEnvelope } from './isSystemEnvelope';
 
 function createWrapper<T extends TAnyEnvelope>(callback: TSubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
-    return withSystemEnvelopes === true
-        ? callback
-        : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
+    return withSystemEnvelopes === true ? callback : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
 }
 
 function createPostMessageWrapper<T extends TAnyEnvelope>(callback: TSubscribeCallback<T>) {
@@ -20,7 +13,7 @@ function createPostMessageWrapper<T extends TAnyEnvelope>(callback: TSubscribeCa
         if (isEnvelope(event.data)) {
             queueMicrotask(() => callback(event.data));
         }
-    }
+    };
 }
 
 export function createSubscribe<T extends TAnyEnvelope>(_source: TEnvelopeSubscribeSource<T>): TSubscribe<T> {
@@ -40,5 +33,5 @@ export function createSubscribe<T extends TAnyEnvelope>(_source: TEnvelopeSubscr
         }
 
         return noop;
-    }
+    };
 }

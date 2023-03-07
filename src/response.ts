@@ -1,6 +1,6 @@
-import type {TAnyEnvelope, TDispatch} from "./types";
-import {getFirstRoutePart} from "./route";
-import {TSystemEnvelope} from "./types";
+import type { TAnyEnvelope, TDispatch } from './types';
+import { getFirstRoutePart } from './route';
+import { TSystemEnvelope } from './types';
 
 export function getDefaultResponseName(request: TAnyEnvelope): string {
     return getFirstRoutePart(request.routePassed!).replace('Request', 'Response');
@@ -15,6 +15,6 @@ export function createResponseFactory<_T extends TAnyEnvelope>(dispatch: TDispat
             envelope.routeAnnounced = routeAnnounced;
 
             return dispatch(envelope);
-        }
-    }
+        };
+    };
 }

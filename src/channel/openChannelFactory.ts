@@ -1,23 +1,20 @@
-import {
-    TActorContext,
-    TAnyEnvelope,
-    TDispatch,
-    TSubscribe,
-} from "../types";
-import {requestFactory} from "../request";
-import {createResponseFactory} from "../response";
-import {CHANNEL_CLOSE_TYPE, TChannelCloseEnvelope} from "./defs";
-import {createEnvelope} from "../envelope";
-import {noop, once} from "../utils";
-import {TOpenChanelContext} from "./types";
+import { TActorContext, TAnyEnvelope, TDispatch, TSubscribe } from '../types';
+import { requestFactory } from '../request';
+import { createResponseFactory } from '../response';
+import { CHANNEL_CLOSE_TYPE, TChannelCloseEnvelope } from './defs';
+import { createEnvelope } from '../envelope';
+import { noop, once } from '../utils';
+import { TOpenChanelContext } from './types';
 
-export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEnvelope>(context: TActorContext<_In, _Out>) {
+export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEnvelope>(
+    context: TActorContext<_In, _Out>,
+) {
     const request = requestFactory(context);
     const createResponse = createResponseFactory(context.dispatch);
 
     return function openChannel<In extends _In, Out extends _Out>(
         envelope: _Out,
-        onOpen: (context: TOpenChanelContext<In, Out>) => void | Function
+        onOpen: (context: TOpenChanelContext<In, Out>) => void | Function,
     ) {
         const mapClose = new Map<string, Function>();
         const mapDispose = new Map<string, Function>();
@@ -32,13 +29,13 @@ export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEn
                 dispatch(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
             });
 
-        const createSubscribeToChannel = (route: string): TSubscribe<In> =>
+        const createSubscribeToChannel =
+            (route: string): TSubscribe<In> =>
             (callback, withSystemEnvelopes) =>
                 context.subscribe(
                     (envelope) => envelope.routePassed === route && callback(envelope as In),
-                    withSystemEnvelopes
+                    withSystemEnvelopes,
                 );
-
 
         const closeRequestResponse = request<_Out, In>(envelope, (envelope: TChannelCloseEnvelope) => {
             const channelRoute = envelope.routePassed;
@@ -56,12 +53,12 @@ export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEn
                 const dispatch = createResponse(envelope);
                 const subscribe = createSubscribeToChannel(channelRoute);
                 const close = createCloseChannel(channelRoute, dispatch);
-                const dispose = onOpen({dispatch, subscribe, close});
+                const dispose = onOpen({ dispatch, subscribe, close });
 
                 mapClose.set(channelRoute, close);
                 mapDispose.set(channelRoute, dispose ?? noop);
             }
-        })
+        });
 
         return function closeOpenedChannels() {
             closeRequestResponse();
@@ -72,6 +69,6 @@ export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEn
 
             mapClose.clear();
             mapDispose.clear();
-        }
-    }
+        };
+    };
 }

@@ -1,4 +1,4 @@
-import {TEnvelope} from "../types";
+import { TEnvelope } from '../types';
 
 export const CHANNEL_OPEN_TYPE = '__CHANNEL_OPEN_TYPE__' as const;
 export type TChannelOpenEnvelope = TEnvelope<typeof CHANNEL_OPEN_TYPE, void>;

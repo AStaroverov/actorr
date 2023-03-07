@@ -1,9 +1,9 @@
-import type {TSumActionEnvelope, TSumResultEnvelope} from "../sum/defs";
-import type {TMinMaxActionEnvelope, TMinMaxResultEnvelope} from "../minmax/defs";
+import type { TSumActionEnvelope, TSumResultEnvelope } from '../sum/defs';
+import type { TMinMaxActionEnvelope, TMinMaxResultEnvelope } from '../minmax/defs';
 
-import {createActor} from "../createActor";
-import {connectActorToActor, TActor} from "../../../../main";
-import {TLaunchEnvelope} from "../../defs";
+import { createActor } from '../createActor';
+import { connectActorToActor, TActor } from '../../../../main';
+import { TLaunchEnvelope } from '../../defs';
 
 export function createEmptyActor(createdNestedActors: () => TActor[]) {
     return createActor<
@@ -14,5 +14,5 @@ export function createEmptyActor(createdNestedActors: () => TActor[]) {
         const disconnects = actors.map(connectActorToActor.bind(null, context));
 
         return () => disconnects.forEach((d) => d());
-    })
+    });
 }

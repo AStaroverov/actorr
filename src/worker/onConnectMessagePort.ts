@@ -1,9 +1,9 @@
-import type {TConnectEnvelope, TDisconnectEnvelope, TMessagePortName} from "./types";
-import {isEnvelope} from "../envelope";
-import {setMessagePort, deleteMessagePort, onMessagePortFinalize} from "./ports";
-import {isSharedWorker, isWorker, CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE} from "./defs";
+import type { TConnectEnvelope, TDisconnectEnvelope, TMessagePortName } from './types';
+import { isEnvelope } from '../envelope';
+import { setMessagePort, deleteMessagePort, onMessagePortFinalize } from './ports';
+import { isSharedWorker, isWorker, CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
 
-export function onConnectMessagePort(callback: (name: TMessagePortName) => (unknown | Function)): void {
+export function onConnectMessagePort(callback: (name: TMessagePortName) => unknown | Function): void {
     if (isWorker) {
         (self as unknown as MessagePort).addEventListener('message', onMessage);
     }

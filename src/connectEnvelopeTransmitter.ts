@@ -1,14 +1,14 @@
-import type {TAnyEnvelope, TEnvelope, TEnvelopeTransmitterWithMapper, TEnvelopeTransmitter} from "./types";
-import {getMapper, getEnvelopeTransmitter, getName} from "./utils";
-import {createSubscribe} from "./subscribe";
-import {dispatch} from "./dispatch";
-import {extendRoute, reduceRoute, routeEndsWith} from "./route";
-import {shallowCopyEnvelope} from "./envelope";
-import {isSystemEnvelope} from "./isSystemEnvelope";
+import type { TAnyEnvelope, TEnvelope, TEnvelopeTransmitterWithMapper, TEnvelopeTransmitter } from './types';
+import { getMapper, getEnvelopeTransmitter, getName } from './utils';
+import { createSubscribe } from './subscribe';
+import { dispatch } from './dispatch';
+import { extendRoute, reduceRoute, routeEndsWith } from './route';
+import { shallowCopyEnvelope } from './envelope';
+import { isSystemEnvelope } from './isSystemEnvelope';
 
 export function connectEnvelopeTransmitter<T1 extends TEnvelopeTransmitter, T2 extends TEnvelopeTransmitter>(
     _transmitter1: T1 | TEnvelopeTransmitterWithMapper<T1>,
-    _transmitter2: T2 | TEnvelopeTransmitterWithMapper<T2>
+    _transmitter2: T2 | TEnvelopeTransmitterWithMapper<T2>,
 ): Function {
     const transmitter1 = getEnvelopeTransmitter(_transmitter1);
     const transmitter2 = getEnvelopeTransmitter(_transmitter2);
@@ -16,15 +16,13 @@ export function connectEnvelopeTransmitter<T1 extends TEnvelopeTransmitter, T2 e
     const mapper2 = getMapper(_transmitter2);
     const name1 = getName(transmitter1);
     const name2 = getName(transmitter2);
-    const unsub1 = createSubscribe(transmitter1)(
-        createRedispatch(name1, mapper1, name2, transmitter2), true);
-    const unsub2 = createSubscribe(transmitter2)(
-        createRedispatch(name2, mapper2, name1, transmitter1), true);
+    const unsub1 = createSubscribe(transmitter1)(createRedispatch(name1, mapper1, name2, transmitter2), true);
+    const unsub2 = createSubscribe(transmitter2)(createRedispatch(name2, mapper2, name1, transmitter1), true);
 
     return () => {
         unsub1();
         unsub2();
-    }
+    };
 }
 
 function createRedispatch(
@@ -64,7 +62,5 @@ function extendPassedPart(envelope: TAnyEnvelope, part: string) {
 }
 
 function reduceAnnouncedPart(envelope: TAnyEnvelope, part: string) {
-    return envelope.routeAnnounced === undefined
-        ? undefined
-        : reduceRoute(envelope.routeAnnounced, part);
+    return envelope.routeAnnounced === undefined ? undefined : reduceRoute(envelope.routeAnnounced, part);
 }

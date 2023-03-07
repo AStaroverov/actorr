@@ -1,5 +1,5 @@
-import type {TEnvelope, TEnvelopeDispatchTarget} from "./types";
-import {getMessagePort} from "./worker/ports";
+import type { TEnvelope, TEnvelopeDispatchTarget } from './types';
+import { getMessagePort } from './worker/ports';
 
 export function dispatch<S extends TEnvelopeDispatchTarget>(source: S, envelope: TEnvelope<any, any>) {
     if (typeof source === 'string') {
