@@ -9,24 +9,27 @@ import {
 } from "./types";
 import {isSystemEnvelope} from "./isSystemEnvelope";
 
-function createSubscribe<T extends TAnyEnvelope>(_source: TEnvelopeSubscribeSource<T>): TSubscribe<T> {
-    const createWrapper = (callback: TSubscribeCallback<T>, withSystemEnvelopes?: void | boolean) => {
-        return withSystemEnvelopes === true ? callback : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
-    }
-    const createPostMessageWrapper = (callback: TSubscribeCallback<T>) => {
-        return (event: MessageEvent) => {
-            if (isEnvelope(event.data)) {
-                queueMicrotask(() => callback(event.data));
-            }
+function createWrapper<T extends TAnyEnvelope>(callback: TSubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
+    return withSystemEnvelopes === true
+        ? callback
+        : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
+}
+
+function createPostMessageWrapper<T extends TAnyEnvelope>(callback: TSubscribeCallback<T>) {
+    return (event: MessageEvent) => {
+        if (isEnvelope(event.data)) {
+            queueMicrotask(() => callback(event.data));
         }
     }
+}
 
+export function createSubscribe<T extends TAnyEnvelope>(_source: TEnvelopeSubscribeSource<T>): TSubscribe<T> {
     return function subscribe(callback, withSystemEnvelopes) {
         const source = typeof _source === 'string' ? getMessagePort(_source) : _source;
         const wrapper = createWrapper(callback, withSystemEnvelopes);
 
         if (typeof source === 'object' && 'subscribe' in source) {
-            // @ts-ignore - can be dangerous
+            // @ts-ignore - second argument not transparent
             return source.subscribe(wrapper, true);
         }
 
@@ -39,5 +42,3 @@ function createSubscribe<T extends TAnyEnvelope>(_source: TEnvelopeSubscribeSour
         return noop;
     }
 }
-
-export { createSubscribe };
