@@ -18,6 +18,7 @@ export type TEnvelope<T extends string, P> = {
 };
 
 export type TAnyEnvelope = TEnvelope<any, any>;
+export type TUnknownEnvelope = TEnvelope<string, unknown>;
 export type TSystemEnvelope = TChannelOpenEnvelope | TChannelCloseEnvelope | THeartbeatEnvelope;
 
 export type TDispatch<T extends TAnyEnvelope> = (envelope: T | TSystemEnvelope) => unknown;

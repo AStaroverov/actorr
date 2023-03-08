@@ -1,5 +1,5 @@
 import { TActorContext, TAnyEnvelope, TDispatch, TSubscribe } from '../types';
-import { requestFactory } from '../request';
+import { createRequest } from '../request';
 import { createResponseFactory } from '../response';
 import { CHANNEL_CLOSE_TYPE, TChannelCloseEnvelope } from './defs';
 import { createEnvelope } from '../envelope';
@@ -9,7 +9,7 @@ import { TOpenChanelContext } from './types';
 export function openChannelFactory<_In extends TAnyEnvelope, _Out extends TAnyEnvelope>(
     context: TActorContext<_In, _Out>,
 ) {
-    const request = requestFactory(context);
+    const request = createRequest(context);
     const createResponse = createResponseFactory(context.dispatch);
 
     return function openChannel<In extends _In, Out extends _Out>(

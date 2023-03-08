@@ -1,8 +1,8 @@
-import {requestFactory} from "./src/request";
+import { createRequest } from './src/request';
 
-export type { TActor, TMailbox, TEnvelope, TAnyEnvelope } from './src/types';
+export type { TActor, TMailbox, TEnvelope, TAnyEnvelope, TUnknownEnvelope } from './src/types';
 export { createEnvelope, shallowCopyEnvelope } from './src/envelope';
-export { requestFactory } from './src/request';
+export { createRequest } from './src/request';
 export { createResponseFactory } from './src/response';
 export { createActorFactory } from './src/createActorFactory';
 export { connectActorToActor } from './src/connectActorToActor';
@@ -16,4 +16,10 @@ export { DISCONNECT_MESSAGE_PORT_TYPE, CONNECT_MESSAGE_PORT_TYPE } from './src/w
 export { getMessagePortName } from './src/utils';
 
 // Advanced public methods
-export { getAllMessagePorts, getMessagePort, setMessagePort, deleteMessagePort, onMessagePortFinalize } from './src/worker/ports';
+export {
+    getAllMessagePorts,
+    getMessagePort,
+    setMessagePort,
+    deleteMessagePort,
+    onMessagePortFinalize,
+} from './src/worker/ports';
