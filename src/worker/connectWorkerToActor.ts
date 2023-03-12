@@ -32,9 +32,9 @@ export function connectActorToWorker<A extends TActor, W extends Worker | Shared
     };
 }
 
-export function connectWorkerToActor<A extends TActor<TAnyEnvelope, TAnyEnvelope>, W extends Worker | SharedWorker>(
-    _worker: W | TEnvelopeTransmitterWithMapper<W>,
-    _actor: A | TEnvelopeTransmitterWithMapper<A>,
+export function connectWorkerToActor<A extends TActor, W extends Worker | SharedWorker>(
+    worker: W | TEnvelopeTransmitterWithMapper<W>,
+    actor: A | TEnvelopeTransmitterWithMapper<A>,
 ) {
-    return connectActorToWorker(_actor, _worker);
+    return connectActorToWorker(actor, worker);
 }

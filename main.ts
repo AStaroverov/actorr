@@ -9,7 +9,7 @@ export { connectActorToActor } from './src/connectActorToActor';
 
 export type { TMessagePortName } from './src/worker/types';
 export { onConnectMessagePort } from './src/worker/onConnectMessagePort';
-export { connectActorToWorker, connectWorkerToActor } from './src/worker/connectWorker';
+export { connectActorToWorker, connectWorkerToActor } from './src/worker/connectWorkerToActor';
 export { connectMessagePortToActor, connectActorToMessagePort } from './src/worker/connectMessagePort';
 export { DISCONNECT_MESSAGE_PORT_TYPE, CONNECT_MESSAGE_PORT_TYPE } from './src/worker/defs';
 
