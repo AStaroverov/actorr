@@ -12,8 +12,12 @@ export const once = <T extends (...args: any[]) => void>(fn: T): T => {
     });
 };
 
-export function getEnvelopeTransmitter<T>(envelopeTransfer: T | TEnvelopeTransmitterWithMapper<T>) {
-    return typeof envelopeTransfer === 'object' && 'ref' in envelopeTransfer! ? envelopeTransfer.ref : envelopeTransfer;
+export function getEnvelopeTransmitter<T>(envelopeTransfer: T | TEnvelopeTransmitterWithMapper<T>): T {
+    return typeof envelopeTransfer === 'object' &&
+        'ref' in envelopeTransfer! &&
+        typeof envelopeTransfer.ref === 'object'
+        ? envelopeTransfer.ref
+        : (envelopeTransfer as T);
 }
 
 export function getMapper<T>(source: T | TEnvelopeTransmitterWithMapper<T>) {

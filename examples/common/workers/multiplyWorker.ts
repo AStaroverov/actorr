@@ -5,7 +5,7 @@ import { SUM_ACTION_TYPE, SUM_RESULT_TYPE } from '../actors/sum/defs';
 
 const actor = createActorMultiply().launch();
 
-onConnectMessagePort((name) => {
+onConnectMessagePort(self as WorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
     if (getMessagePortName('MAIN') === name) {
         return connectMessagePortToActor(
             {

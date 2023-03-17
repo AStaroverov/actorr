@@ -4,7 +4,7 @@ import { onConnectMessagePort, connectMessagePortToActor } from '../../../main';
 
 const actorSum = createActorSum().launch();
 
-onConnectMessagePort((name) => {
+onConnectMessagePort(self as WorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
     return connectMessagePortToActor(name, {
         ref: actorSum,
         map: (envelope) => (envelope.type === SUM_RESULT_TYPE ? envelope : undefined),

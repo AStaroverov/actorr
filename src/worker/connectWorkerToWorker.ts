@@ -20,6 +20,8 @@ export function connectWorkerToWorker<W1 extends Worker | SharedWorker, W2 exten
     return () => {
         dispatchToWorker1(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerName2));
         dispatchToWorker2(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerName1));
+        channel.port1.close();
+        channel.port2.close();
     };
 }
 

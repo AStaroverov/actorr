@@ -1,19 +1,42 @@
 import type { TConnectEnvelope, TDisconnectEnvelope, TMessagePortName } from './types';
 import { isEnvelope } from '../envelope';
 import { setMessagePort, deleteMessagePort, onMessagePortFinalize } from './ports';
-import { isSharedWorker, isWorker, CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
+import {
+    isSharedWorkerScope,
+    isDedicatedWorkerScope,
+    CONNECT_MESSAGE_PORT_TYPE,
+    DISCONNECT_MESSAGE_PORT_TYPE,
+} from './defs';
+import { noop } from '../utils';
 
-export function onConnectMessagePort(callback: (name: TMessagePortName) => unknown | Function): void {
-    if (isWorker) {
-        (self as unknown as MessagePort).addEventListener('message', onMessage);
+const dependencies = <const>{
+    isDedicatedWorkerScope,
+    isSharedWorkerScope,
+    setMessagePort,
+    deleteMessagePort,
+};
+
+export function onConnectMessagePort(
+    context: DedicatedWorkerGlobalScope | SharedWorkerGlobalScope,
+    callback: (name: TMessagePortName) => unknown | Function,
+    { isDedicatedWorkerScope, isSharedWorkerScope, setMessagePort, deleteMessagePort } = dependencies,
+): VoidFunction {
+    if (isDedicatedWorkerScope(context)) {
+        context.addEventListener('message', onMessage);
+        return () => context.removeEventListener('message', onMessage);
     }
 
-    if (isSharedWorker) {
-        (self as unknown as SharedWorkerGlobalScope).addEventListener('connect', (event: MessageEvent) => {
+    if (isSharedWorkerScope(context)) {
+        const callback = (event: MessageEvent) => {
             event.ports[0].start();
             event.ports[0].addEventListener('message', onMessage);
-        });
+        };
+
+        context.addEventListener('connect', callback);
+        return () => context.removeEventListener('connect', callback);
     }
+
+    return noop;
 
     function onMessage(event: MessageEvent) {
         const itIs = isEnvelope(event.data);
