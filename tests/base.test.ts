@@ -6,7 +6,7 @@ import {
     TAnyEnvelope,
     TEnvelope,
     TUnknownEnvelope,
-} from '../main';
+} from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 
 export const NUMBER_TYPE = 'NUMBER_TYPE' as const;

@@ -1,6 +1,6 @@
 import { createActor } from '../common/actors/createActor';
 import { MULTIPLY_ACTION_TYPE, TMultiplyActionEnvelope, TMultiplyResultEnvelope } from '../common/actors/multiply/defs';
-import { createEnvelope, createRequest } from '../../main';
+import { createEnvelope, createRequest } from '../../src';
 import { TLaunchEnvelope } from '../common/defs';
 import { TAnyEnvelope } from '../../src/types';
 

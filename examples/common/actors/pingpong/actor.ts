@@ -1,7 +1,7 @@
 import { createActor } from '../createActor';
 import { TPongEnvelope, TPingEnvelope, TOpenChannelEnvelope, PING_TYPE, OPEN_CHANNEL_TYPE } from './defs';
 import { supportChannelFactory } from '../../../../src/channel/supportChannelFactory';
-import { createEnvelope } from '../../../../main';
+import { createEnvelope } from '../../../../src';
 import { createHeartbeat } from '../../../../src/heartbeat';
 
 export function createPingPongActor(delay: number) {

@@ -2,7 +2,7 @@ import type { TSumActionEnvelope, TSumResultEnvelope } from '../sum/defs';
 import type { TMinMaxActionEnvelope, TMinMaxResultEnvelope } from '../minmax/defs';
 
 import { createActor } from '../createActor';
-import { connectActorToActor, TActor } from '../../../../main';
+import { connectActorToActor, TActor } from '../../../../src';
 import { TLaunchEnvelope } from '../../defs';
 
 export function createEmptyActor(createdNestedActors: () => TActor[]) {

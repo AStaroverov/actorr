@@ -2,7 +2,7 @@ import type { TSumActionEnvelope, TSumResultEnvelope } from '../sum/defs';
 import type { TMinMaxActionEnvelope, TMinMaxResultEnvelope } from '../minmax/defs';
 
 import { createActor } from '../createActor';
-import { createEnvelope } from '../../../../main';
+import { createEnvelope } from '../../../../src';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE } from '../sum/defs';
 import { MINMAX_ACTION_TYPE, MINMAX_RESULT_TYPE } from '../minmax/defs';
 import { LAUNCH_TYPE, TLaunchEnvelope } from '../../defs';

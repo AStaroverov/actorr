@@ -1,7 +1,7 @@
 import { createActor } from '../createActor';
 import { createEnvelope } from '../../../../src/envelope';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE, TSumActionEnvelope, TSumResultEnvelope } from './defs';
-import { createResponseFactory } from '../../../../main';
+import { createResponseFactory } from '../../../../src';
 
 export function createActorSum() {
     return createActor<TSumActionEnvelope, TSumResultEnvelope>('SUM', ({ dispatch, subscribe }) => {

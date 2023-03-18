@@ -9,7 +9,7 @@ import {
     TEnvelope,
     TUnknownEnvelope,
     TActor,
-} from '../main';
+} from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 import { openChannelFactory } from '../src/channel/openChannelFactory';
 import { TOpenChanelContext, TSupportChanelContext } from '../src/channel/types';

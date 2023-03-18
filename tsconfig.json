@@ -9,7 +9,7 @@
       "dom",
       "webworker"
     ]                                         /* Specify library files to be included in the compilation. */,
-    "jsx": "preserve" /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */,
+    "skipDefaultLibCheck": true,
     "strict": true /* Enable all strict type-checking options. */,
     "noImplicitAny": true /* Raise error on expressions and declarations with an implied 'any' type. */,
     "strictNullChecks": true /* Enable strict null checks. */,

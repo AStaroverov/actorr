@@ -1,5 +1,5 @@
-import type { TAnyEnvelope, TMailbox } from '../../../main';
-import { createActorFactory } from '../../../main';
+import type { TAnyEnvelope, TMailbox } from '../../../src';
+import { createActorFactory } from '../../../src';
 
 export const createMailbox = <T extends TAnyEnvelope>(): TMailbox<T> => {
     const callbacks = new Set<(envelope: T) => unknown>();

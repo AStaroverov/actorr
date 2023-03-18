@@ -1,7 +1,7 @@
 import { createActorSum } from '../common/actors/sum/actor';
 import { createActorMinMax } from '../common/actors/minmax/actor';
 import { createActorMain } from '../common/actors/main/actor';
-import { connectActorToActor } from '../../main';
+import { connectActorToActor } from '../../src';
 import { SUM_ACTION_TYPE } from '../common/actors/sum/defs';
 import { MINMAX_ACTION_TYPE } from '../common/actors/minmax/defs';
 

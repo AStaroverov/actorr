@@ -1,11 +1,11 @@
-import { onConnectMessagePort, connectMessagePortToActor, getMessagePortName } from '../../../main';
+import { onConnectMessagePort, connectMessagePortToActor, getMessagePortName } from '../../../src';
 import { createActorMultiply } from '../actors/multiply/actor';
 import { MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE } from '../actors/multiply/defs';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE } from '../actors/sum/defs';
 
 const actor = createActorMultiply().launch();
 
-onConnectMessagePort(self as WorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
+onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
     if (getMessagePortName('MAIN') === name) {
         return connectMessagePortToActor(
             {

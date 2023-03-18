@@ -1,4 +1,4 @@
-import { connectActorToWorker } from '../../main';
+import { connectActorToWorker } from '../../src';
 import { connectWorkerToWorker } from '../../src/worker/connectWorkerToWorker';
 import { createActorMain } from './actor';
 

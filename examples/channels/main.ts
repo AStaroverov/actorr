@@ -1,4 +1,4 @@
-import { connectActorToActor } from '../../main';
+import { connectActorToActor } from '../../src';
 import { createActorMain } from './actor';
 import { createEmptyActor } from '../common/actors/empty/actor';
 import { createRandomActor } from '../common/actors/random/actor';

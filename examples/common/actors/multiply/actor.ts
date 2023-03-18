@@ -3,7 +3,7 @@ import { createEnvelope } from '../../../../src/envelope';
 import { MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE, TMultiplyActionEnvelope, TMultiplyResultEnvelope } from './defs';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE, TSumActionEnvelope, TSumResultEnvelope } from '../sum/defs';
 import { TEnvelope } from '../../../../src/types';
-import { responseFactory } from '../../../../main';
+import { responseFactory } from '../../../../src';
 
 export function createActorMultiply() {
     return createActor<TMultiplyActionEnvelope | TSumResultEnvelope, TMultiplyResultEnvelope | TSumActionEnvelope>(

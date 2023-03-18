@@ -11,7 +11,7 @@ import {
     onConnectMessagePort,
     setMessagePort,
     TMessagePortName,
-} from '../main';
+} from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 import { connectWorkerToWorker } from '../src/worker/connectWorkerToWorker';
 

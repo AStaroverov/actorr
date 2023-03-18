@@ -1,5 +1,5 @@
 import { createActor } from '../common/actors/createActor';
-import { createEnvelope } from '../../main';
+import { createEnvelope } from '../../src';
 import { TGenerateRandomEnvelope, TNextRandomEnvelope } from '../common/actors/random/defs';
 import {
     OPEN_CHANNEL_TYPE,
