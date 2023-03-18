@@ -12,12 +12,10 @@ export const once = <T extends (...args: any[]) => void>(fn: T): T => {
     });
 };
 
-export function getEnvelopeTransmitter<T>(envelopeTransfer: T | EnvelopeTransmitterWithMapper<T>): T {
-    return typeof envelopeTransfer === 'object' &&
-        'ref' in envelopeTransfer! &&
-        typeof envelopeTransfer.ref === 'object'
-        ? envelopeTransfer.ref
-        : (envelopeTransfer as T);
+export function getEnvelopeTransmitter<T>(transmitter: T | EnvelopeTransmitterWithMapper<T>): T {
+    return typeof transmitter === 'object' && 'ref' in transmitter! && typeof transmitter.ref === 'object'
+        ? transmitter.ref
+        : (transmitter as T);
 }
 
 export function getMapper<T>(source: T | EnvelopeTransmitterWithMapper<T>) {
@@ -31,7 +29,7 @@ export function getName<T extends EnvelopeTransmitter>(source: T) {
         if (source instanceof MessagePort) return 'MessagePort';
     }
 
-    throw new Error('Can`t compute source name');
+    throw new Error('Can`t detect transmitter name');
 }
 
 export function getMessagePortName(base: string) {

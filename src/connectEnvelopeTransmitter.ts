@@ -1,6 +1,6 @@
 import type { AnyEnvelope, Envelope, EnvelopeTransmitterWithMapper, EnvelopeTransmitter } from './types';
 import { getMapper, getEnvelopeTransmitter, getName } from './utils';
-import { createSubscribe } from './subscribe';
+import { createSubscribe, subscribe } from './subscribe';
 import { dispatch } from './dispatch';
 import { extendRoute, reduceRoute, routeEndsWith } from './route';
 import { shallowCopyEnvelope } from './envelope';
@@ -16,8 +16,8 @@ export function connectEnvelopeTransmitter<T1 extends EnvelopeTransmitter, T2 ex
     const mapper2 = getMapper(_transmitter2);
     const name1 = getName(transmitter1);
     const name2 = getName(transmitter2);
-    const unsub1 = createSubscribe(transmitter1)(createRedispatch(name1, mapper1, name2, transmitter2), true);
-    const unsub2 = createSubscribe(transmitter2)(createRedispatch(name2, mapper2, name1, transmitter1), true);
+    const unsub1 = subscribe(transmitter1, createRedispatch(name1, mapper1, name2, transmitter2), true);
+    const unsub2 = subscribe(transmitter2, createRedispatch(name2, mapper2, name1, transmitter1), true);
 
     return () => {
         unsub1();

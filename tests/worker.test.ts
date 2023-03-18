@@ -1,19 +1,18 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import {
-    CONNECT_MESSAGE_PORT_TYPE,
     connectActorToMessagePort,
     connectActorToWorker,
     createActorFactory,
     createEnvelope,
     deleteMessagePort,
-    DISCONNECT_MESSAGE_PORT_TYPE,
     getMessagePortName,
     onConnectMessagePort,
     setMessagePort,
     MessagePortName,
+    connectWorkerToWorker,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
-import { connectWorkerToWorker } from '../src/worker/connectWorkerToWorker';
+import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
 
 const { MessageChannel, MessagePort } = require('worker_threads');
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

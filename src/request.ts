@@ -1,12 +1,26 @@
-import type { ActorContext, AnyEnvelope, SubscribeCallback } from './types';
+import type {
+    AnyEnvelope,
+    EnvelopeTransmitter,
+    ExtractEnvelopeIn,
+    ExtractEnvelopeOut,
+    SubscribeCallback,
+} from './types';
 import { shallowCopyEnvelope } from './envelope';
+import { createSubscribe, subscribe } from './subscribe';
+import { createDispatch, dispatch } from './dispatch';
 
 function createRequestName(type: string) {
     return `Request(${type}[${Date.now()}])`;
 }
 
-export function createRequest<_Out extends AnyEnvelope, _In extends AnyEnvelope>(context: ActorContext<_In, _Out>) {
-    return function request<Out extends _Out, In extends _In>(envelope: Out, callback: SubscribeCallback<In>) {
+export function createRequest<T extends EnvelopeTransmitter>(transmitter: T) {
+    const dispatch = createDispatch(transmitter);
+    const subscribe = createSubscribe(transmitter);
+
+    return function request<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
+        envelope: Out,
+        callback: SubscribeCallback<In>,
+    ) {
         const name = createRequestName(envelope.type);
         const copy = shallowCopyEnvelope(envelope);
         const isResponse = (envelope: AnyEnvelope): envelope is In => {
@@ -15,10 +29,10 @@ export function createRequest<_Out extends AnyEnvelope, _In extends AnyEnvelope>
         const subscriber = (envelope: AnyEnvelope) => {
             if (isResponse(envelope)) callback(envelope);
         };
-        const unsubscribe = context.subscribe(subscriber, true);
+        const unsubscribe = subscribe(subscriber, true);
 
         copy.routePassed = name;
-        context.dispatch(copy);
+        dispatch(copy);
 
         return unsubscribe;
     };

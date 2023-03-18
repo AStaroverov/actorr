@@ -1,7 +1,7 @@
 import { getMessagePort } from './worker/ports';
 import { isEnvelope } from './envelope';
 import { noop } from './utils';
-import { AnyEnvelope, Subscribe, SubscribeCallback, EnvelopeSubscribeSource } from './types';
+import { AnyEnvelope, Subscribe, SubscribeCallback, EnvelopeSubscribeSource, SystemEnvelope } from './types';
 import { isSystemEnvelope } from './isSystemEnvelope';
 
 function createWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
@@ -34,4 +34,12 @@ export function createSubscribe<T extends AnyEnvelope>(_source: EnvelopeSubscrib
 
         return noop;
     };
+}
+
+export function subscribe<T extends AnyEnvelope, F extends false | true | void = false>(
+    source: EnvelopeSubscribeSource<T>,
+    callback: SubscribeCallback<F extends true ? T | SystemEnvelope : T>,
+    withSystemEnvelopes?: F,
+): Function {
+    return createSubscribe(source)(callback, withSystemEnvelopes);
 }

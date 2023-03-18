@@ -1,13 +1,12 @@
 {
   "name": "webactor",
   "description": "Everything that you need for actor architecture on client",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AStaroverov/actorr.git"
   },
   "author": "AStaroverov",
-  "type": "module",
   "main": "./dist/webactor.umd.cjs",
   "module": "./dist/webactor.js",
   "types": "./dist/index.d.ts",

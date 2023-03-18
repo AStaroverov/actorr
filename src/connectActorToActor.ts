@@ -1,7 +1,7 @@
-import type { LikeActor, EnvelopeTransmitterWithMapper } from './types';
+import type { EnvelopeTransmitterWithMapper, ActorContext, Actor } from './types';
 import { connectEnvelopeTransmitter } from './connectEnvelopeTransmitter';
 
-export function connectActorToActor<A extends LikeActor, B extends LikeActor>(
+export function connectActorToActor<A extends Actor | ActorContext, B extends Actor | ActorContext>(
     actor1: A | EnvelopeTransmitterWithMapper<A>,
     actor2: B | EnvelopeTransmitterWithMapper<B>,
 ) {

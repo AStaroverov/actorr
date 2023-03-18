@@ -1,9 +1,12 @@
-import type { ActorContext, AnyEnvelope, Dispatch, Subscribe } from '../types';
+import type { ActorContext, AnyEnvelope, Dispatch, ExtractEnvelopeIn, ExtractEnvelopeOut, Subscribe } from '../types';
 import type { SupportChanelContext } from './types';
 import { createResponseFactory } from '../response';
 import { getShortRandomString, once } from '../utils';
 import { createEnvelope } from '../envelope';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE } from './defs';
+import { EnvelopeTransmitter } from '../types';
+import { createDispatch } from '../dispatch';
+import { createSubscribe } from '../subscribe';
 
 type Filter<T extends AnyEnvelope> = (envelope: AnyEnvelope) => envelope is T;
 
@@ -17,14 +20,14 @@ function createIsChannelEnvelop<T extends AnyEnvelope>(name: string) {
     };
 }
 
-export function supportChannelFactory<_In extends AnyEnvelope, _Out extends AnyEnvelope>(
-    context: ActorContext<_In, _Out>,
-) {
+export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const mapClose = new Map<string, Function>();
     const mapDispose = new Map<string, Function>();
     const mapUnsubscribe = new Map<string, Function>();
 
-    const createResponse = createResponseFactory<_Out>(context.dispatch);
+    const dispatch = createDispatch(transmitter);
+    const subscribe = createSubscribe(transmitter);
+    const createResponse = createResponseFactory(dispatch);
 
     const createCloseChannel = <T extends AnyEnvelope>(dispatch: Dispatch<T>, name: string) =>
         once(() => {
@@ -41,17 +44,17 @@ export function supportChannelFactory<_In extends AnyEnvelope, _Out extends AnyE
     const createSubscribeToChannel =
         <T extends AnyEnvelope>(filter: Filter<T>): Subscribe<T> =>
         (callback, withSystemEnvelopes) =>
-            context.subscribe((envelope) => filter(envelope) && callback(envelope), withSystemEnvelopes);
+            subscribe((envelope) => filter(envelope) && callback(envelope), withSystemEnvelopes);
 
     const subscribeToChannelClose = <T extends AnyEnvelope>(filter: Filter<T>, name: string) =>
-        context.subscribe((envelope) => {
+        subscribe((envelope) => {
             if (filter(envelope) && envelope.type === CHANNEL_CLOSE_TYPE) {
                 mapClose.has(name) && mapClose.get(name)!();
             }
         }, true);
 
-    return function supportChannel<In extends _In, Out extends _Out>(
-        target: _In,
+    return function supportChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
+        target: ExtractEnvelopeIn<T>,
         onOpen: (context: SupportChanelContext<In, Out>) => void | Function,
     ) {
         const name = createChannelName();

@@ -36,15 +36,6 @@ export type WithSubscribe<T extends AnyEnvelope> = {
     subscribe: Subscribe<T>;
 };
 
-export type ActorContext<In extends AnyEnvelope, Out extends AnyEnvelope> = WithDispatch<Out> &
-    WithSubscribe<In> & {
-        name: string;
-    };
-
-export type ActorConstructor<In extends AnyEnvelope, Out extends AnyEnvelope> = (
-    context: ActorContext<In, Out>,
-) => unknown | Function;
-
 export type Actor<In extends AnyEnvelope = AnyEnvelope, Out extends AnyEnvelope = AnyEnvelope> = WithDispatch<In> &
     WithSubscribe<Out> & {
         name: string;
@@ -52,15 +43,21 @@ export type Actor<In extends AnyEnvelope = AnyEnvelope, Out extends AnyEnvelope 
         destroy: () => void;
     };
 
-export type LikeActor<In extends AnyEnvelope = AnyEnvelope, Out extends AnyEnvelope = AnyEnvelope> = Pick<
-    Actor<In, Out>,
-    'name' | 'dispatch' | 'subscribe'
->;
+export type ActorContext<
+    In extends AnyEnvelope = AnyEnvelope,
+    Out extends AnyEnvelope = AnyEnvelope,
+> = WithDispatch<Out> &
+    WithSubscribe<In> & {
+        name: string;
+    };
 
 export type EnvelopeTransmitter<In extends AnyEnvelope = AnyEnvelope, Out extends AnyEnvelope = AnyEnvelope> =
-    | LikeActor<In, Out>
-    | MessagePort
-    | MessagePortName;
+    | Actor<In, Out>
+    | ActorContext<In, Out>
+    | (EnvelopeSubscribeSource<In> & EnvelopeDispatchTarget<Out>);
+
+export type ExtractEnvelopeIn<T> = T extends EnvelopeTransmitter<infer In, any> ? In : never;
+export type ExtractEnvelopeOut<T> = T extends EnvelopeTransmitter<any, infer Out> ? Out : never;
 
 export type EnvelopeDispatchTarget<T extends AnyEnvelope = AnyEnvelope> =
     | Pick<Mailbox<T>, 'dispatch'>
@@ -73,6 +70,12 @@ export type EnvelopeSubscribeSource<T extends AnyEnvelope = AnyEnvelope> =
     | WithSubscribe<T>
     | MessagePort
     | MessagePortName;
+
+export type ExtractEnvelope<T> = T extends EnvelopeDispatchTarget<infer E>
+    ? E
+    : T extends EnvelopeSubscribeSource<infer E>
+    ? E
+    : never;
 
 export type EnvelopeTransmitterWithMapper<T> = {
     ref: T;

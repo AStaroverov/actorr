@@ -1,19 +1,20 @@
-import { ActorContext, AnyEnvelope, Dispatch, Subscribe } from '../types';
+import { Dispatch, EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, Subscribe } from '../types';
 import { createRequest } from '../request';
 import { createResponseFactory } from '../response';
 import { CHANNEL_CLOSE_TYPE, ChannelCloseEnvelope } from './defs';
 import { createEnvelope } from '../envelope';
 import { noop, once } from '../utils';
 import { OpenChanelContext } from './types';
+import { createDispatch } from '../dispatch';
+import { createSubscribe } from '../subscribe';
 
-export function openChannelFactory<_In extends AnyEnvelope, _Out extends AnyEnvelope>(
-    context: ActorContext<_In, _Out>,
-) {
-    const request = createRequest(context);
-    const createResponse = createResponseFactory(context.dispatch);
+export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
+    const request = createRequest(transmitter);
+    const subscribe = createSubscribe(transmitter);
+    const createResponse = createResponseFactory(createDispatch(transmitter));
 
-    return function openChannel<In extends _In, Out extends _Out>(
-        envelope: _Out,
+    return function openChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
+        envelope: ExtractEnvelopeOut<T>,
         onOpen: (context: OpenChanelContext<In, Out>) => void | Function,
     ) {
         const mapClose = new Map<string, Function>();
@@ -32,12 +33,12 @@ export function openChannelFactory<_In extends AnyEnvelope, _Out extends AnyEnve
         const createSubscribeToChannel =
             (route: string): Subscribe<In> =>
             (callback, withSystemEnvelopes) =>
-                context.subscribe(
+                subscribe(
                     (envelope) => envelope.routePassed === route && callback(envelope as In),
                     withSystemEnvelopes,
                 );
 
-        const closeRequestResponse = request<_Out, In>(envelope, (envelope: ChannelCloseEnvelope) => {
+        const closeRequestResponse = request(envelope, (envelope: ChannelCloseEnvelope) => {
             const channelRoute = envelope.routePassed;
 
             if (channelRoute === undefined) {
