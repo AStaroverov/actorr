@@ -1,9 +1,9 @@
-import type { TLikeActor, TEnvelopeTransmitterWithMapper } from './types';
+import type { LikeActor, EnvelopeTransmitterWithMapper } from './types';
 import { connectEnvelopeTransmitter } from './connectEnvelopeTransmitter';
 
-export function connectActorToActor<A extends TLikeActor, B extends TLikeActor>(
-    actor1: A | TEnvelopeTransmitterWithMapper<A>,
-    actor2: B | TEnvelopeTransmitterWithMapper<B>,
+export function connectActorToActor<A extends LikeActor, B extends LikeActor>(
+    actor1: A | EnvelopeTransmitterWithMapper<A>,
+    actor2: B | EnvelopeTransmitterWithMapper<B>,
 ) {
     return connectEnvelopeTransmitter(actor1, actor2);
 }

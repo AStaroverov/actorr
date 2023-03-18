@@ -1,4 +1,4 @@
-import type { TAnyEnvelope, TEnvelope, TEnvelopeTransmitterWithMapper, TEnvelopeTransmitter } from './types';
+import type { AnyEnvelope, Envelope, EnvelopeTransmitterWithMapper, EnvelopeTransmitter } from './types';
 import { getMapper, getEnvelopeTransmitter, getName } from './utils';
 import { createSubscribe } from './subscribe';
 import { dispatch } from './dispatch';
@@ -6,9 +6,9 @@ import { extendRoute, reduceRoute, routeEndsWith } from './route';
 import { shallowCopyEnvelope } from './envelope';
 import { isSystemEnvelope } from './isSystemEnvelope';
 
-export function connectEnvelopeTransmitter<T1 extends TEnvelopeTransmitter, T2 extends TEnvelopeTransmitter>(
-    _transmitter1: T1 | TEnvelopeTransmitterWithMapper<T1>,
-    _transmitter2: T2 | TEnvelopeTransmitterWithMapper<T2>,
+export function connectEnvelopeTransmitter<T1 extends EnvelopeTransmitter, T2 extends EnvelopeTransmitter>(
+    _transmitter1: T1 | EnvelopeTransmitterWithMapper<T1>,
+    _transmitter2: T2 | EnvelopeTransmitterWithMapper<T2>,
 ): Function {
     const transmitter1 = getEnvelopeTransmitter(_transmitter1);
     const transmitter2 = getEnvelopeTransmitter(_transmitter2);
@@ -27,11 +27,11 @@ export function connectEnvelopeTransmitter<T1 extends TEnvelopeTransmitter, T2 e
 
 function createRedispatch(
     sourceName: string,
-    sourceMapper: (envelope: TAnyEnvelope) => undefined | TAnyEnvelope,
+    sourceMapper: (envelope: AnyEnvelope) => undefined | AnyEnvelope,
     targetName: string,
-    target: TEnvelopeTransmitter,
+    target: EnvelopeTransmitter,
 ) {
-    return function redispatch(_envelope: TEnvelope<any, any>) {
+    return function redispatch(_envelope: Envelope<any, any>) {
         const envelope = isSystemEnvelope(_envelope) ? _envelope : sourceMapper(_envelope);
 
         if (envelope === undefined) return;
@@ -53,14 +53,14 @@ function createRedispatch(
     };
 }
 
-function hasCorrectRoute(envelope: TAnyEnvelope, part: string) {
+function hasCorrectRoute(envelope: AnyEnvelope, part: string) {
     return envelope.routeAnnounced === undefined || routeEndsWith(envelope.routeAnnounced, part);
 }
 
-function extendPassedPart(envelope: TAnyEnvelope, part: string) {
+function extendPassedPart(envelope: AnyEnvelope, part: string) {
     return extendRoute(envelope.routePassed ?? '', part);
 }
 
-function reduceAnnouncedPart(envelope: TAnyEnvelope, part: string) {
+function reduceAnnouncedPart(envelope: AnyEnvelope, part: string) {
     return envelope.routeAnnounced === undefined ? undefined : reduceRoute(envelope.routeAnnounced, part);
 }

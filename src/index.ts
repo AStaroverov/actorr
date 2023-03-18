@@ -1,14 +1,21 @@
-export type { TActor, TMailbox, TEnvelope, TAnyEnvelope, TUnknownEnvelope } from './types';
-export { createEnvelope } from './envelope';
-export { createRequest } from './request';
-export { createResponseFactory } from './response';
+export * from './types';
 export { createActorFactory } from './createActorFactory';
+export { createEnvelope } from './envelope';
+
 export { connectActorToActor } from './connectActorToActor';
 
-export type { TMessagePortName } from './worker/types';
+export { createRequest } from './request';
+export { createResponseFactory } from './response';
+
+export * from './channel/types';
+export { openChannelFactory } from './channel/openChannelFactory';
+export { supportChannelFactory } from './channel/supportChannelFactory';
+
+export * from './worker/types';
 export { onConnectMessagePort } from './worker/onConnectMessagePort';
-export { connectActorToWorker, connectWorkerToActor } from './worker/connectWorkerToActor';
-export { connectMessagePortToActor, connectActorToMessagePort } from './worker/connectMessagePort';
+export { connectWorkerToWorker } from './worker/connectWorkerToWorker';
+export { connectActorToWorker, connectWorkerToActor } from './worker/connectActorToWorker';
+export { connectMessagePortToActor, connectActorToMessagePort } from './worker/connectActorToMessagePort';
 
 // Advanced public methods
 export { getMessagePortName } from './utils';

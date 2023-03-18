@@ -1,7 +1,7 @@
-import type { TEnvelope, TEnvelopeDispatchTarget } from './types';
+import type { Envelope, EnvelopeDispatchTarget } from './types';
 import { getMessagePort } from './worker/ports';
 
-export function dispatch<S extends TEnvelopeDispatchTarget>(source: S, envelope: TEnvelope<any, any>) {
+export function dispatch<S extends EnvelopeDispatchTarget>(source: S, envelope: Envelope<any, any>) {
     if (typeof source === 'string') {
         queueMicrotask(() => {
             const port = getMessagePort(source);

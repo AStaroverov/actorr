@@ -2,10 +2,10 @@ import type { TSumActionEnvelope, TSumResultEnvelope } from '../sum/defs';
 import type { TMinMaxActionEnvelope, TMinMaxResultEnvelope } from '../minmax/defs';
 
 import { createActor } from '../createActor';
-import { connectActorToActor, TActor } from '../../../../src';
+import { connectActorToActor, Actor } from '../../../../src';
 import { TLaunchEnvelope } from '../../defs';
 
-export function createEmptyActor(createdNestedActors: () => TActor[]) {
+export function createEmptyActor(createdNestedActors: () => Actor[]) {
     return createActor<
         TLaunchEnvelope | TSumResultEnvelope | TMinMaxResultEnvelope,
         TSumActionEnvelope | TMinMaxActionEnvelope

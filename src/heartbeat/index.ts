@@ -1,16 +1,16 @@
-import { TAnyEnvelope, TWithDispatch, TWithSubscribe } from '../types';
+import { AnyEnvelope, WithDispatch, WithSubscribe } from '../types';
 import { HEARTBEAT_ENVELOPE } from './def';
 import { createEnvelope } from '../envelope';
 
-export type THeartbeatOptions = {
+export type HeartbeatOptions = {
     maxTimeout?: number;
     checkTimeout?: number;
     dispatchTimeout?: number;
 };
-export function createHeartbeat<Out extends TAnyEnvelope, In extends TAnyEnvelope>(
-    context: TWithDispatch<Out> & TWithSubscribe<In>,
+export function createHeartbeat<Out extends AnyEnvelope, In extends AnyEnvelope>(
+    context: WithDispatch<Out> & WithSubscribe<In>,
     panic: (diff: number) => void,
-    options?: THeartbeatOptions,
+    options?: HeartbeatOptions,
 ) {
     const envelope = createEnvelope(HEARTBEAT_ENVELOPE, undefined);
     const maxTimeout = options?.maxTimeout ?? 3000;

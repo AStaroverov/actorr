@@ -1,33 +1,23 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import {
-    connectActorToActor,
-    createActorFactory,
-    createEnvelope,
-    createResponseFactory,
-    createRequest,
-    TAnyEnvelope,
-    TEnvelope,
-    TUnknownEnvelope,
-    TActor,
-} from '../src';
+import { connectActorToActor, createActorFactory, createEnvelope, AnyEnvelope, Envelope, Actor } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 import { openChannelFactory } from '../src/channel/openChannelFactory';
-import { TOpenChanelContext, TSupportChanelContext } from '../src/channel/types';
+import { OpenChanelContext, SupportChanelContext } from '../src/channel/types';
 import { supportChannelFactory } from '../src/channel/supportChannelFactory';
-import { Mock, UnknownFunction } from 'jest-mock';
+import { Mock } from 'jest-mock';
 import { createHeartbeat } from '../src/heartbeat';
 
 export const OPEN_TYPE = 'OPEN_TYPE' as const;
-export type TOpenEnvelope = TEnvelope<typeof OPEN_TYPE, undefined>;
+export type TOpenEnvelope = Envelope<typeof OPEN_TYPE, undefined>;
 export const CHANNEL_TYPE = 'CHANNEL_TYPE' as const;
-export type TChannelEnvelope = TEnvelope<typeof CHANNEL_TYPE, number>;
+export type TChannelEnvelope = Envelope<typeof CHANNEL_TYPE, number>;
 
 describe(`Channel`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
 
     it(`single channel`, (done) => {
         const onChannelEnvelope1 = jest.fn();
-        const onOpenChannel = jest.fn((channel: TOpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
             channel.subscribe(onChannelEnvelope1);
 
             setTimeout(() => {
@@ -43,7 +33,7 @@ describe(`Channel`, () => {
 
         const onCloseChannel = jest.fn();
         const onChannelEnvelope2 = jest.fn();
-        const onSupportChannel = jest.fn((channel: TSupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
             const unsub = channel.subscribe(onChannelEnvelope2);
 
             setTimeout(() => {
@@ -85,8 +75,8 @@ describe(`Channel`, () => {
     });
 
     it(`single channel through few actors`, (done) => {
-        const createActorWrapper = <T extends TActor>(createInternalActor: () => T) =>
-            createActor<TAnyEnvelope, TAnyEnvelope>(`ActorWrapper`, (context) => {
+        const createActorWrapper = <T extends Actor>(createInternalActor: () => T) =>
+            createActor<AnyEnvelope, AnyEnvelope>(`ActorWrapper`, (context) => {
                 const actor = createInternalActor();
                 const disconnect = connectActorToActor(context, actor);
 
@@ -101,7 +91,7 @@ describe(`Channel`, () => {
         const onChannelEnvelope1 = jest.fn();
         const onChannelEnvelope2 = jest.fn();
 
-        const onOpenChannel = jest.fn((channel: TOpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
             channel.subscribe(onChannelEnvelope1);
 
             setTimeout(() => {
@@ -111,7 +101,7 @@ describe(`Channel`, () => {
             });
         });
 
-        const onSupportChannel = jest.fn((channel: TSupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
             channel.subscribe(onChannelEnvelope2);
 
             setTimeout(() => {
@@ -161,7 +151,7 @@ describe(`Channel`, () => {
         const onChannelEnvelopesFromOpen: Mock[] = [];
         const onChannelEnvelopesFromSupport: Mock[] = [];
 
-        const onOpenChannel = jest.fn((channel: TOpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
             const onChannelEnvelope = jest.fn();
 
             onChannelEnvelopesFromOpen.push(onChannelEnvelope);
@@ -181,7 +171,7 @@ describe(`Channel`, () => {
             return openChannel(createEnvelope(OPEN_TYPE, undefined), onOpenChannel);
         });
 
-        const onSupportChannel = jest.fn((channel: TSupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
             const onChannelEnvelope = jest.fn();
 
             onChannelEnvelopesFromSupport.push(onChannelEnvelope);
@@ -259,7 +249,7 @@ describe(`Channel`, () => {
         const onHeartbeatTimeout = jest.fn((timeout: number) => {});
         const closeSupportedChannel = jest.fn(() => {});
 
-        const onOpenChannel = jest.fn((channel: TOpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
             const stop = createHeartbeat(
                 channel,
                 (timeout) => {
@@ -277,7 +267,7 @@ describe(`Channel`, () => {
             return stop;
         });
 
-        const onSupportChannel = jest.fn((channel: TSupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
             return closeSupportedChannel;
         });
 

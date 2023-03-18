@@ -1,14 +1,14 @@
-import { TChannelCloseEnvelope, TChannelOpenEnvelope } from './channel/defs';
-import { THeartbeatEnvelope } from './heartbeat/def';
-import { TMessagePortName } from './worker/types';
+import { ChannelCloseEnvelope, ChannelOpenEnvelope } from './channel/defs';
+import { HeartbeatEnvelope } from './heartbeat/def';
+import { MessagePortName } from './worker/types';
 
-export type TMailbox<T extends TAnyEnvelope = TAnyEnvelope> = {
+export type Mailbox<T extends AnyEnvelope = AnyEnvelope> = {
     destroy?: () => void;
     dispatch: (envelope: T) => unknown;
-    subscribe: (callback: TSubscribeCallback<T>) => Function;
+    subscribe: (callback: SubscribeCallback<T>) => Function;
 };
 
-export type TEnvelope<T extends string, P> = {
+export type Envelope<T extends string, P> = {
     type: T;
     payload: P;
     transferable: undefined | Transferable[];
@@ -17,67 +17,64 @@ export type TEnvelope<T extends string, P> = {
     routeAnnounced: undefined | string;
 };
 
-export type TAnyEnvelope = TEnvelope<any, any>;
-export type TUnknownEnvelope = TEnvelope<string, unknown>;
-export type TSystemEnvelope = TChannelOpenEnvelope | TChannelCloseEnvelope | THeartbeatEnvelope;
+export type AnyEnvelope = Envelope<any, any>;
+export type UnknownEnvelope = Envelope<string, unknown>;
+export type SystemEnvelope = ChannelOpenEnvelope | ChannelCloseEnvelope | HeartbeatEnvelope;
 
-export type TDispatch<T extends TAnyEnvelope> = (envelope: T | TSystemEnvelope) => unknown;
-export type TSubscribe<T extends TAnyEnvelope> = <F extends false | true | void = false>(
-    callback: TSubscribeCallback<F extends true ? T | TSystemEnvelope : T>,
+export type Dispatch<T extends AnyEnvelope> = (envelope: T | SystemEnvelope) => unknown;
+export type Subscribe<T extends AnyEnvelope> = <F extends false | true | void = false>(
+    callback: SubscribeCallback<F extends true ? T | SystemEnvelope : T>,
     withSystemEnvelopes?: F,
 ) => Function;
-export type TSubscribeCallback<T extends TAnyEnvelope> = (envelope: T) => unknown;
+export type SubscribeCallback<T extends AnyEnvelope> = (envelope: T) => unknown;
 
-export type TWithDispatch<T extends TAnyEnvelope> = {
-    dispatch: TDispatch<T>;
+export type WithDispatch<T extends AnyEnvelope> = {
+    dispatch: Dispatch<T>;
 };
 
-export type TWithSubscribe<T extends TAnyEnvelope> = {
-    subscribe: TSubscribe<T>;
+export type WithSubscribe<T extends AnyEnvelope> = {
+    subscribe: Subscribe<T>;
 };
 
-export type TActorContext<In extends TAnyEnvelope, Out extends TAnyEnvelope> = TWithDispatch<Out> &
-    TWithSubscribe<In> & {
+export type ActorContext<In extends AnyEnvelope, Out extends AnyEnvelope> = WithDispatch<Out> &
+    WithSubscribe<In> & {
         name: string;
     };
 
-export type TActorConstructor<In extends TAnyEnvelope, Out extends TAnyEnvelope> = (
-    context: TActorContext<In, Out>,
+export type ActorConstructor<In extends AnyEnvelope, Out extends AnyEnvelope> = (
+    context: ActorContext<In, Out>,
 ) => unknown | Function;
 
-export type TActor<
-    In extends TAnyEnvelope = TAnyEnvelope,
-    Out extends TAnyEnvelope = TAnyEnvelope,
-> = TWithDispatch<In> &
-    TWithSubscribe<Out> & {
+export type Actor<In extends AnyEnvelope = AnyEnvelope, Out extends AnyEnvelope = AnyEnvelope> = WithDispatch<In> &
+    WithSubscribe<Out> & {
         name: string;
-        launch: () => TActor<In, Out>;
+        launch: () => Actor<In, Out>;
         destroy: () => void;
     };
 
-export type TLikeActor<In extends TAnyEnvelope = TAnyEnvelope, Out extends TAnyEnvelope = TAnyEnvelope> = Pick<
-    TActor<In, Out>,
+export type LikeActor<In extends AnyEnvelope = AnyEnvelope, Out extends AnyEnvelope = AnyEnvelope> = Pick<
+    Actor<In, Out>,
     'name' | 'dispatch' | 'subscribe'
 >;
 
-export type TEnvelopeTransmitter<In extends TAnyEnvelope = TAnyEnvelope, Out extends TAnyEnvelope = TAnyEnvelope> =
-    | TLikeActor<In, Out>
+export type EnvelopeTransmitter<In extends AnyEnvelope = AnyEnvelope, Out extends AnyEnvelope = AnyEnvelope> =
+    | LikeActor<In, Out>
     | MessagePort
-    | TMessagePortName;
+    | MessagePortName;
 
-export type TEnvelopeDispatchTarget<T extends TAnyEnvelope = TAnyEnvelope> =
-    | Pick<TMailbox<T>, 'dispatch'>
-    | TWithDispatch<T>
+export type EnvelopeDispatchTarget<T extends AnyEnvelope = AnyEnvelope> =
+    | Pick<Mailbox<T>, 'dispatch'>
+    | WithDispatch<T>
     | MessagePort
-    | TMessagePortName;
+    | MessagePortName;
 
-export type TEnvelopeSubscribeSource<T extends TAnyEnvelope = TAnyEnvelope> =
-    | Pick<TMailbox<T>, 'subscribe'>
-    | TWithSubscribe<T>
+export type EnvelopeSubscribeSource<T extends AnyEnvelope = AnyEnvelope> =
+    | Pick<Mailbox<T>, 'subscribe'>
+    | WithSubscribe<T>
     | MessagePort
-    | TMessagePortName;
+    | MessagePortName;
 
-export type TEnvelopeTransmitterWithMapper<T> = {
+export type EnvelopeTransmitterWithMapper<T> = {
     ref: T;
-    map?: (envelope: TAnyEnvelope) => undefined | TAnyEnvelope;
+    map?: (envelope: AnyEnvelope) => undefined | AnyEnvelope;
 };

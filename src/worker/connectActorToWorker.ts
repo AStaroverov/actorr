@@ -1,12 +1,12 @@
-import { TActor, TAnyEnvelope, TEnvelopeTransmitterWithMapper } from '../types';
+import { Actor, AnyEnvelope, EnvelopeTransmitterWithMapper } from '../types';
 import { createEnvelope } from '../envelope';
 import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
-import { connectActorToMessagePort } from './connectMessagePort';
+import { connectActorToMessagePort } from './connectActorToMessagePort';
 import { getMessagePortName, getMapper, getEnvelopeTransmitter } from '../utils';
 
-export function connectActorToWorker<A extends TActor, W extends Worker | SharedWorker>(
-    _actor: A | TEnvelopeTransmitterWithMapper<A>,
-    _worker: W | TEnvelopeTransmitterWithMapper<W>,
+export function connectActorToWorker<A extends Actor, W extends Worker | SharedWorker>(
+    _actor: A | EnvelopeTransmitterWithMapper<A>,
+    _worker: W | EnvelopeTransmitterWithMapper<W>,
 ) {
     const actor = getEnvelopeTransmitter(_actor);
     const worker = getEnvelopeTransmitter(_worker);
@@ -32,9 +32,9 @@ export function connectActorToWorker<A extends TActor, W extends Worker | Shared
     };
 }
 
-export function connectWorkerToActor<A extends TActor, W extends Worker | SharedWorker>(
-    worker: W | TEnvelopeTransmitterWithMapper<W>,
-    actor: A | TEnvelopeTransmitterWithMapper<A>,
+export function connectWorkerToActor<A extends Actor, W extends Worker | SharedWorker>(
+    worker: W | EnvelopeTransmitterWithMapper<W>,
+    actor: A | EnvelopeTransmitterWithMapper<A>,
 ) {
     return connectActorToWorker(actor, worker);
 }

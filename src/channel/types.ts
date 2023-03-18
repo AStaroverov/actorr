@@ -1,6 +1,6 @@
-import { TAnyEnvelope, TWithDispatch, TWithSubscribe } from '../types';
+import { AnyEnvelope, WithDispatch, WithSubscribe } from '../types';
 
-export type TOpenChanelContext<In extends TAnyEnvelope, Out extends TAnyEnvelope> = TWithSubscribe<In> &
-    TWithDispatch<Out> & { close: Function };
-export type TSupportChanelContext<In extends TAnyEnvelope, Out extends TAnyEnvelope> = TWithSubscribe<In> &
-    TWithDispatch<Out>;
+export type OpenChanelContext<In extends AnyEnvelope, Out extends AnyEnvelope> = WithSubscribe<In> &
+    WithDispatch<Out> & { close: Function };
+export type SupportChanelContext<In extends AnyEnvelope, Out extends AnyEnvelope> = WithSubscribe<In> &
+    WithDispatch<Out>;

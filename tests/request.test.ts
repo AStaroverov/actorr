@@ -5,30 +5,30 @@ import {
     createEnvelope,
     createResponseFactory,
     createRequest,
-    TAnyEnvelope,
-    TEnvelope,
-    TUnknownEnvelope,
+    AnyEnvelope,
+    Envelope,
+    UnknownEnvelope,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 
 export const REQUEST_TYPE = 'REQUEST_TYPE' as const;
-export type TReqEnvelope = TEnvelope<typeof REQUEST_TYPE, undefined>;
+export type TReqEnvelope = Envelope<typeof REQUEST_TYPE, undefined>;
 export const RESPONSE_TYPE = 'RESPONSE_TYPE' as const;
-export type TResEnvelope = TEnvelope<typeof RESPONSE_TYPE, number>;
+export type TResEnvelope = Envelope<typeof RESPONSE_TYPE, number>;
 
 describe(`Request`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
 
     it(`request + response`, () => {
-        const onResponse = jest.fn((envelope: TUnknownEnvelope) => {
+        const onResponse = jest.fn((envelope: UnknownEnvelope) => {
             expect(envelope.type).toEqual(RESPONSE_TYPE);
         });
-        const ac1 = createActor<TUnknownEnvelope, TReqEnvelope>(`A1`, (context) => {
+        const ac1 = createActor<UnknownEnvelope, TReqEnvelope>(`A1`, (context) => {
             const request = createRequest(context);
             const close = request(createEnvelope(REQUEST_TYPE, undefined), onResponse);
         });
 
-        const ac2 = createActor<TReqEnvelope, TResEnvelope | TEnvelope<'spam', unknown>>(
+        const ac2 = createActor<TReqEnvelope, TResEnvelope | Envelope<'spam', unknown>>(
             `A2`,
             ({ dispatch, subscribe }) => {
                 const createResponse = createResponseFactory(dispatch);
@@ -58,12 +58,12 @@ describe(`Request`, () => {
 
     it(`request + multi response`, () => {
         const onResponse = jest.fn();
-        const ac1 = createActor<TUnknownEnvelope, TReqEnvelope>(`A1`, (context) => {
+        const ac1 = createActor<UnknownEnvelope, TReqEnvelope>(`A1`, (context) => {
             const request = createRequest(context);
             const close = request(createEnvelope(REQUEST_TYPE, undefined), onResponse);
         });
 
-        const ac2 = createActor<TReqEnvelope, TResEnvelope | TEnvelope<'spam', unknown>>(
+        const ac2 = createActor<TReqEnvelope, TResEnvelope | Envelope<'spam', unknown>>(
             `A2`,
             ({ dispatch, subscribe }) => {
                 const createResponse = createResponseFactory(dispatch);
@@ -82,7 +82,7 @@ describe(`Request`, () => {
                 });
             },
         );
-        const ac3 = createActor<TReqEnvelope, TResEnvelope | TEnvelope<'spam', unknown>>(
+        const ac3 = createActor<TReqEnvelope, TResEnvelope | Envelope<'spam', unknown>>(
             `A3`,
             ({ dispatch, subscribe }) => {
                 const createResponse = createResponseFactory(dispatch);

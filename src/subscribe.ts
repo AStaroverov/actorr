@@ -1,14 +1,14 @@
 import { getMessagePort } from './worker/ports';
 import { isEnvelope } from './envelope';
 import { noop } from './utils';
-import { TAnyEnvelope, TSubscribe, TSubscribeCallback, TEnvelopeSubscribeSource } from './types';
+import { AnyEnvelope, Subscribe, SubscribeCallback, EnvelopeSubscribeSource } from './types';
 import { isSystemEnvelope } from './isSystemEnvelope';
 
-function createWrapper<T extends TAnyEnvelope>(callback: TSubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
+function createWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
     return withSystemEnvelopes === true ? callback : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
 }
 
-function createPostMessageWrapper<T extends TAnyEnvelope>(callback: TSubscribeCallback<T>) {
+function createPostMessageWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>) {
     return (event: MessageEvent) => {
         if (isEnvelope(event.data)) {
             queueMicrotask(() => callback(event.data));
@@ -16,7 +16,7 @@ function createPostMessageWrapper<T extends TAnyEnvelope>(callback: TSubscribeCa
     };
 }
 
-export function createSubscribe<T extends TAnyEnvelope>(_source: TEnvelopeSubscribeSource<T>): TSubscribe<T> {
+export function createSubscribe<T extends AnyEnvelope>(_source: EnvelopeSubscribeSource<T>): Subscribe<T> {
     return function subscribe(callback, withSystemEnvelopes) {
         const source = typeof _source === 'string' ? getMessagePort(_source) : _source;
         const wrapper = createWrapper(callback, withSystemEnvelopes);

@@ -10,7 +10,7 @@ import {
     getMessagePortName,
     onConnectMessagePort,
     setMessagePort,
-    TMessagePortName,
+    MessagePortName,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 import { connectWorkerToWorker } from '../src/worker/connectWorkerToWorker';
@@ -139,10 +139,10 @@ describe(`Worker`, () => {
         const onConnect = jest.fn((name: string) => onDisconnect);
 
         const channel = new MessageChannel();
-        const setMessagePortMock = jest.fn((name: TMessagePortName, port: MessagePort) => {
+        const setMessagePortMock = jest.fn((name: MessagePortName, port: MessagePort) => {
             setMessagePort(name, port);
         });
-        const deleteMessagePortMock = jest.fn((name: TMessagePortName) => {
+        const deleteMessagePortMock = jest.fn((name: MessagePortName) => {
             deleteMessagePort(name);
         });
 

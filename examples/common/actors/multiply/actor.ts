@@ -2,7 +2,7 @@ import { createActor } from '../createActor';
 import { createEnvelope } from '../../../../src/envelope';
 import { MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE, TMultiplyActionEnvelope, TMultiplyResultEnvelope } from './defs';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE, TSumActionEnvelope, TSumResultEnvelope } from '../sum/defs';
-import { TEnvelope } from '../../../../src/types';
+import { Envelope } from '../../../../src/types';
 import { responseFactory } from '../../../../src';
 
 export function createActorMultiply() {
@@ -18,7 +18,7 @@ export function createActorMultiply() {
                     for (let i = 1; i < numbers.length; i++) {
                         dispatch(createEnvelope(SUM_ACTION_TYPE, Array(numbers[i]).fill(result)));
                         result = await new Promise<number>((r) => {
-                            const cb = (envelope: TEnvelope<any, any>) => {
+                            const cb = (envelope: Envelope<any, any>) => {
                                 if (envelope.type === SUM_RESULT_TYPE) {
                                     unsubscribe(cb);
                                     r(envelope.payload);

@@ -1,4 +1,4 @@
-import type { TConnectEnvelope, TDisconnectEnvelope, TMessagePortName } from './types';
+import type { ConnectEnvelope, DisconnectEnvelope, MessagePortName } from './types';
 import { isEnvelope } from '../envelope';
 import { setMessagePort, deleteMessagePort, onMessagePortFinalize } from './ports';
 import {
@@ -18,7 +18,7 @@ const dependencies = <const>{
 
 export function onConnectMessagePort(
     context: DedicatedWorkerGlobalScope | SharedWorkerGlobalScope,
-    callback: (name: TMessagePortName) => unknown | Function,
+    callback: (name: MessagePortName) => unknown | Function,
     { isDedicatedWorkerScope, isSharedWorkerScope, setMessagePort, deleteMessagePort } = dependencies,
 ): VoidFunction {
     if (isDedicatedWorkerScope(context)) {
@@ -42,7 +42,7 @@ export function onConnectMessagePort(
         const itIs = isEnvelope(event.data);
 
         if (itIs && event.data.type === CONNECT_MESSAGE_PORT_TYPE) {
-            const envelope = event.data as TConnectEnvelope;
+            const envelope = event.data as ConnectEnvelope;
             const name = envelope.payload;
             const port = event.ports[0];
 
@@ -56,7 +56,7 @@ export function onConnectMessagePort(
         }
 
         if (itIs && event.data.type === DISCONNECT_MESSAGE_PORT_TYPE) {
-            const envelope = event.data as TDisconnectEnvelope;
+            const envelope = event.data as DisconnectEnvelope;
             const name = envelope.payload;
 
             deleteMessagePort(name);
