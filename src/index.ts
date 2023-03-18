@@ -19,6 +19,8 @@ export { connectMessagePortToActor, connectActorToMessagePort } from './worker/c
 
 // Advanced public methods
 export { getMessagePortName } from './utils';
+export { dispatch } from './dispatch';
+export { createSubscribe } from './subscribe';
 export {
     getAllMessagePorts,
     getMessagePort,
