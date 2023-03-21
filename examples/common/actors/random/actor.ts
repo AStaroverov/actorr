@@ -9,7 +9,6 @@ export function createRandomActor() {
 
         context.subscribe((envelope) => {
             if (envelope.type === GENERATE_RANDOM_TYPE) {
-                console.log('>>', envelope);
                 const close = supportChannel(envelope, ({ dispatch }) => {
                     const id = setInterval(() => dispatch(createEnvelope(NEXT_RANDOM_TYPE, Math.random())), 1000);
                     return () => clearInterval(id);

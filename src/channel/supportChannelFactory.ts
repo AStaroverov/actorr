@@ -1,4 +1,4 @@
-import type { ActorContext, AnyEnvelope, Dispatch, ExtractEnvelopeIn, ExtractEnvelopeOut, Subscribe } from '../types';
+import type { AnyEnvelope, Dispatch, ExtractEnvelopeIn, ExtractEnvelopeOut, Subscribe } from '../types';
 import type { SupportChanelContext } from './types';
 import { createResponseFactory } from '../response';
 import { getShortRandomString, once } from '../utils';

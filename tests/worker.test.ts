@@ -12,23 +12,33 @@ import {
     connectWorkerToWorker,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
-import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
+import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE, PING, PONG } from '../src/worker/defs';
 
 const { MessageChannel, MessagePort } = require('worker_threads');
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 class WorkerMock {
-    postMessage = jest.fn((message: string | object, transferable: Transferable[]) => {});
-    addEventListener = jest.fn();
-    removeEventListener = jest.fn();
+    channel = new MessageChannel();
+
+    constructor() {
+        this.channel.port2.addListener('message', (event: MessageEvent) => {
+            event.data === PING && this.channel.port2.postMessage({ data: PONG });
+        });
+    }
+
+    postMessage = jest.fn((message: string | object, transferable?: Transferable[]) => {
+        this.channel.port1.postMessage({ data: message }, transferable);
+    });
+    addEventListener = jest.fn((type: string, listener: (event: MessageEvent) => void) => {
+        this.channel.port1.addListener(type, listener);
+    });
+    removeEventListener = jest.fn((type: string, listener: (event: MessageEvent) => void) => {
+        this.channel.port1.removeListener(type, listener);
+    });
 }
 
 class SharedWorkerMock {
-    port = {
-        postMessage: jest.fn((message: string | object, transferable: Transferable[]) => {}),
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-    };
+    port = new WorkerMock();
 }
 
 class WorkerGlobalScopeMock {
@@ -81,52 +91,50 @@ describe(`Worker`, () => {
         channel.port2.close();
     });
 
-    it(`connectActorToWorker`, () => {
+    it(`connectActorToWorker`, async () => {
         const actor = createActor('Actor', (context) => {
             context.dispatch(createEnvelope(`test`, `test`));
         });
         const worker = new WorkerMock();
-        const disconnect = connectActorToWorker(actor, worker as unknown as Worker);
         const workerPortName = getMessagePortName(actor.name);
+        const disconnect = await connectActorToWorker(actor, worker as unknown as Worker);
 
-        expect(worker.postMessage).toHaveBeenCalledTimes(1);
-        expect(worker.postMessage.mock.calls[0][0]).toEqual(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName));
-        expect(worker.postMessage.mock.calls[0][1][0]).toBeInstanceOf(MessagePort);
+        expect(worker.postMessage).toHaveBeenCalledTimes(2);
+        expect(worker.postMessage.mock.calls[1][0]).toEqual(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName));
+        expect(worker.postMessage.mock.calls[1][1]?.[0]).toBeInstanceOf(MessagePort);
 
         disconnect();
 
-        expect(worker.postMessage.mock.calls[1][0]).toEqual(
+        expect(worker.postMessage.mock.calls[2][0]).toEqual(
             createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName),
         );
     });
 
-    it(`connectWorkerToWorker`, () => {
+    it(`connectWorkerToWorker`, async () => {
         const worker1 = new WorkerMock();
         const worker2 = new SharedWorkerMock();
         const name1 = 'worker1';
         const name2 = 'worker2';
-        const disconnect = connectWorkerToWorker(
+        const disconnect = await connectWorkerToWorker(
             { name: name1, worker: worker1 as unknown as Worker },
             { name: name2, worker: worker2 as unknown as Worker },
         );
 
-        expect(worker1.postMessage).toHaveBeenCalledTimes(1);
-        expect(worker1.postMessage.mock.calls[0][0]).toEqual(
+        expect(worker1.postMessage.mock.lastCall?.[0]).toEqual(
             createEnvelope(CONNECT_MESSAGE_PORT_TYPE, getMessagePortName(name2)),
         );
-        expect(worker1.postMessage.mock.calls[0][1][0]).toBeInstanceOf(MessagePort);
-        expect(worker2.port.postMessage).toHaveBeenCalledTimes(1);
-        expect(worker2.port.postMessage.mock.calls[0][0]).toEqual(
+        expect(worker1.postMessage.mock.lastCall?.[1]?.[0]).toBeInstanceOf(MessagePort);
+        expect(worker2.port.postMessage.mock.lastCall?.[0]).toEqual(
             createEnvelope(CONNECT_MESSAGE_PORT_TYPE, getMessagePortName(name1)),
         );
-        expect(worker2.port.postMessage.mock.calls[0][1][0]).toBeInstanceOf(MessagePort);
+        expect(worker2.port.postMessage.mock.lastCall?.[1]?.[0]).toBeInstanceOf(MessagePort);
 
         disconnect();
 
-        expect(worker1.postMessage.mock.calls[1][0]).toEqual(
+        expect(worker1.postMessage.mock.lastCall?.[0]).toEqual(
             createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, getMessagePortName(name2)),
         );
-        expect(worker2.port.postMessage.mock.calls[1][0]).toEqual(
+        expect(worker2.port.postMessage.mock.lastCall?.[0]).toEqual(
             createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, getMessagePortName(name1)),
         );
     });

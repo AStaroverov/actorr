@@ -11,19 +11,19 @@ export function createActorMain() {
     return createActor<
         TLaunchEnvelope | TSumResultEnvelope | TMinMaxResultEnvelope,
         TSumActionEnvelope | TMinMaxActionEnvelope
-    >('MAIN', (envelope, { dispatch }) => {
-        if (envelope.type === LAUNCH_TYPE) {
-            dispatch(createEnvelope(SUM_ACTION_TYPE, [1, 2] as [number, number]));
-            const arr64 = new Float64Array([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            dispatch(createEnvelope(MINMAX_ACTION_TYPE, arr64, [arr64]));
-        }
+    >('MAIN', (context) => {
+        context.subscribe((envelope) => {
+            if (envelope.type === MINMAX_RESULT_TYPE) {
+                console.log('MinMax', envelope.payload);
+            }
 
-        if (envelope.type === MINMAX_RESULT_TYPE) {
-            console.log('MinMax', envelope.payload);
-        }
+            if (envelope.type === SUM_RESULT_TYPE) {
+                console.log('Sum', envelope.payload);
+            }
+        });
 
-        if (envelope.type === SUM_RESULT_TYPE) {
-            console.log('Sum', envelope.payload);
-        }
+        context.dispatch(createEnvelope(SUM_ACTION_TYPE, [1, 2] as [number, number]));
+        const arr64 = new Float64Array([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        context.dispatch(createEnvelope(MINMAX_ACTION_TYPE, arr64, [arr64.buffer]));
     });
 }

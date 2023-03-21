@@ -6,6 +6,8 @@ import {
     isDedicatedWorkerScope,
     CONNECT_MESSAGE_PORT_TYPE,
     DISCONNECT_MESSAGE_PORT_TYPE,
+    PING,
+    PONG,
 } from './defs';
 import { noop } from '../utils';
 
@@ -22,14 +24,18 @@ export function onConnectMessagePort(
     { isDedicatedWorkerScope, isSharedWorkerScope, setMessagePort, deleteMessagePort } = dependencies,
 ): VoidFunction {
     if (isDedicatedWorkerScope(context)) {
-        context.addEventListener('message', onMessage);
-        return () => context.removeEventListener('message', onMessage);
+        const listener = createListener(context);
+        context.addEventListener('message', listener);
+        return () => context.removeEventListener('message', listener);
     }
 
     if (isSharedWorkerScope(context)) {
         const callback = (event: MessageEvent) => {
-            event.ports[0].start();
-            event.ports[0].addEventListener('message', onMessage);
+            const port = event.ports[0];
+            const listener = createListener(port);
+
+            port.start();
+            port.addEventListener('message', listener);
         };
 
         context.addEventListener('connect', callback);
@@ -38,28 +44,33 @@ export function onConnectMessagePort(
 
     return noop;
 
-    function onMessage(event: MessageEvent) {
-        const itIs = isEnvelope(event.data);
+    function createListener(port: MessagePort | DedicatedWorkerGlobalScope) {
+        return function listener(event: MessageEvent) {
+            if (event.data === PING) return port.postMessage(PONG);
 
-        if (itIs && event.data.type === CONNECT_MESSAGE_PORT_TYPE) {
-            const envelope = event.data as ConnectEnvelope;
-            const name = envelope.payload;
-            const port = event.ports[0];
+            if (!isEnvelope(event.data)) return;
 
-            setMessagePort(name, port);
-            port.start();
-            const onFinalize = callback(name);
+            if (event.data.type === CONNECT_MESSAGE_PORT_TYPE) {
+                const envelope = event.data as ConnectEnvelope;
+                const name = envelope.payload;
+                const port = event.ports[0];
 
-            if (typeof onFinalize === 'function') {
-                onMessagePortFinalize(name, onFinalize);
+                port.start();
+                setMessagePort(name, port);
+
+                const onFinalize = callback(name);
+
+                if (typeof onFinalize === 'function') {
+                    onMessagePortFinalize(name, onFinalize);
+                }
             }
-        }
 
-        if (itIs && event.data.type === DISCONNECT_MESSAGE_PORT_TYPE) {
-            const envelope = event.data as DisconnectEnvelope;
-            const name = envelope.payload;
+            if (event.data.type === DISCONNECT_MESSAGE_PORT_TYPE) {
+                const envelope = event.data as DisconnectEnvelope;
+                const name = envelope.payload;
 
-            deleteMessagePort(name);
-        }
+                deleteMessagePort(name);
+            }
+        };
     }
 }

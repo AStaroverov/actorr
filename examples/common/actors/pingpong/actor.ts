@@ -10,7 +10,6 @@ export function createPingPongActor(delay: number) {
 
         context.subscribe((envelope) => {
             if (envelope.type === OPEN_CHANNEL_TYPE) {
-                console.log('>>', envelope);
                 const close = supportChannel<TPongEnvelope, TPingEnvelope>(envelope, (ctx) => {
                     ctx.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1));
 

@@ -36,11 +36,9 @@ describe(`Channel`, () => {
         const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
             const unsub = channel.subscribe(onChannelEnvelope2);
 
-            setTimeout(() => {
-                for (let i = 0; i < 4; i++) {
-                    channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
-                }
-            });
+            for (let i = 0; i < 4; i++) {
+                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
+            }
 
             return () => {
                 unsub();

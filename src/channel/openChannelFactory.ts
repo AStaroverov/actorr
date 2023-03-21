@@ -1,7 +1,7 @@
 import { Dispatch, EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, Subscribe } from '../types';
 import { createRequest } from '../request';
 import { createResponseFactory } from '../response';
-import { CHANNEL_CLOSE_TYPE, ChannelCloseEnvelope } from './defs';
+import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseEnvelope } from './defs';
 import { createEnvelope } from '../envelope';
 import { noop, once } from '../utils';
 import { OpenChanelContext } from './types';
@@ -38,7 +38,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                     withSystemEnvelopes,
                 );
 
-        const closeRequestResponse = request(envelope, (envelope: ChannelCloseEnvelope) => {
+        const closeRequestResponse = request(envelope, (envelope) => {
             const channelRoute = envelope.routePassed;
 
             if (channelRoute === undefined) {
@@ -50,7 +50,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 return;
             }
 
-            if (!mapDispose.has(channelRoute)) {
+            if (envelope.type === CHANNEL_OPEN_TYPE && !mapDispose.has(channelRoute)) {
                 const dispatch = createResponse(envelope);
                 const subscribe = createSubscribeToChannel(channelRoute);
                 const close = createCloseChannel(channelRoute, dispatch);

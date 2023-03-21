@@ -9,7 +9,6 @@ export function createActorSum() {
 
         subscribe((envelope) => {
             if (envelope.type === SUM_ACTION_TYPE) {
-                console.log('>>', envelope);
                 const response = createResponse(envelope);
 
                 response(

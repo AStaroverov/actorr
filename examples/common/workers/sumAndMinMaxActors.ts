@@ -3,8 +3,8 @@ import { createActorMinMax } from '../actors/minmax/actor';
 import { onConnectMessagePort, connectMessagePortToActor } from '../../../src';
 import { SUM_RESULT_TYPE } from '../actors/sum/defs';
 
-const actorSum = createActorSum();
-const actorMinMax = createActorMinMax();
+const actorSum = createActorSum().launch();
+const actorMinMax = createActorMinMax().launch();
 
 onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
     const dis1 = connectMessagePortToActor(name, {
