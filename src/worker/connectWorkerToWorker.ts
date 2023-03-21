@@ -8,8 +8,7 @@ export async function connectWorkerToWorker<W1 extends Worker | SharedWorker, W2
     worker1: { name: string; worker: W1 },
     worker2: { name: string; worker: W1 },
 ) {
-    await waitWorker(worker1.worker);
-    await waitWorker(worker2.worker);
+    await Promise.all([waitWorker(worker1.worker), waitWorker(worker2.worker)]);
 
     const channel = new MessageChannel();
 
