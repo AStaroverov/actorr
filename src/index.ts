@@ -10,6 +10,8 @@ export { createResponseFactory } from './response';
 export * from './channel/types';
 export { openChannelFactory } from './channel/openChannelFactory';
 export { supportChannelFactory } from './channel/supportChannelFactory';
+export type { HeartbeatOptions } from './heartbeat';
+export { createHeartbeat } from './heartbeat';
 
 export * from './worker/types';
 export { onConnectMessagePort } from './worker/onConnectMessagePort';
