@@ -25,7 +25,7 @@ The `createEnvelope` function returns an Envelope object that can be sent betwee
 The `isEnvelope` method is a utility method that checks whether a given object is an instance of the Envelope or not. The method takes one argument, obj, which is the object to be checked.
 
 ```typescript
-isEnvelope<T extends Envelope>(some: any): some is T
+function isEnvelope<T extends Envelope>(some: any): some is T
 ```
 
 ### createActorFactory
