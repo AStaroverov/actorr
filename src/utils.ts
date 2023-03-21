@@ -13,13 +13,13 @@ export const once = <T extends (...args: any[]) => void>(fn: T): T => {
 };
 
 export function getEnvelopeTransmitter<T>(transmitter: T | EnvelopeTransmitterWithMapper<T>): T {
-    return typeof transmitter === 'object' && 'ref' in transmitter! && typeof transmitter.ref === 'object'
-        ? transmitter.ref
+    return typeof transmitter === 'object' && 'transmitter' in transmitter!
+        ? transmitter.transmitter
         : (transmitter as T);
 }
 
-export function getMapper<T>(source: T | EnvelopeTransmitterWithMapper<T>) {
-    return (typeof source === 'object' && 'ref' in source! ? source.map : undefined) ?? identity;
+export function getMapper<T>(transmitter: T | EnvelopeTransmitterWithMapper<T>) {
+    return (typeof transmitter === 'object' && 'transmitter' in transmitter! ? transmitter.map : undefined) ?? identity;
 }
 
 export function getName<T extends EnvelopeTransmitter>(source: T) {

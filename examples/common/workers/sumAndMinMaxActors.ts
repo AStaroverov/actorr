@@ -8,7 +8,7 @@ const actorMinMax = createActorMinMax().launch();
 
 onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
     const dis1 = connectMessagePortToActor(name, {
-        ref: actorSum,
+        transmitter: actorSum,
         map: (envelope) => (envelope.type === SUM_RESULT_TYPE ? envelope : undefined),
     });
     const dis2 = connectMessagePortToActor(name, actorMinMax);

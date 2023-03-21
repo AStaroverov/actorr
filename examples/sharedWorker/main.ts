@@ -1,5 +1,4 @@
-import { connectActorToWorker } from '../../src';
-import { connectWorkerToWorker } from '../../src/worker/connectWorkerToWorker';
+import { connectActorToWorker, connectWorkerToWorker } from '../../src';
 import { createActorMain } from './actor';
 
 const actorMain = createActorMain();
@@ -12,7 +11,10 @@ const multiplyWorker = new SharedWorker(new URL('../common/workers/multiplyWorke
     type: 'module',
 });
 
-connectActorToWorker(actorMain, multiplyWorker);
-connectWorkerToWorker({ name: 'SUM_WORKER', worker: sumWorker }, { name: 'MULTIPLY_WORKER', worker: multiplyWorker });
+await connectActorToWorker(actorMain, multiplyWorker);
+await connectWorkerToWorker(
+    { name: 'SUM_WORKER', worker: sumWorker },
+    { name: 'MULTIPLY_WORKER', worker: multiplyWorker },
+);
 
-setTimeout(() => actorMain.launch(), 100);
+actorMain.launch();

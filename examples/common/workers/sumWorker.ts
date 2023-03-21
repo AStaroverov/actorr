@@ -6,7 +6,7 @@ const actorSum = createActorSum().launch();
 
 onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
     return connectMessagePortToActor(name, {
-        ref: actorSum,
+        transmitter: actorSum,
         map: (envelope) => (envelope.type === SUM_RESULT_TYPE ? envelope : undefined),
     });
 });

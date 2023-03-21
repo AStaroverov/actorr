@@ -23,7 +23,7 @@ export function createPingPongActor(delay: number) {
                         pingTimeoutId = setTimeout(
                             () => ctx.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1)),
                             delay,
-                        );
+                        ) as unknown as number;
                     });
 
                     return () => {

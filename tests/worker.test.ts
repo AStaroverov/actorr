@@ -31,6 +31,8 @@ class WorkerMock {
         this.channel.port2.close();
     }
 
+    start() {}
+
     postMessage = jest.fn((message: string | object, transferable?: Transferable[]) => {
         this.channel.port1.postMessage({ data: message }, transferable);
     });

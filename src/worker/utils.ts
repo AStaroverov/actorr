@@ -4,7 +4,7 @@ export function getWorkerPostMessage(worker: Worker | SharedWorker) {
 
 export function getWorkerAddEventListener(worker: Worker | SharedWorker) {
     return worker instanceof SharedWorker
-        ? worker.port.addEventListener.bind(worker.port)
+        ? (worker.port.start(), worker.port.addEventListener.bind(worker.port))
         : worker.addEventListener.bind(worker);
 }
 

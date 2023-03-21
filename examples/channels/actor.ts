@@ -31,7 +31,6 @@ export function createActorMain() {
         const closePingPongChannel = openChannel<TPingEnvelope, TPongEnvelope>(
             createEnvelope(OPEN_CHANNEL_TYPE, 1),
             (context) => {
-                debugger;
                 const closePing = createHeartbeat(context, () => {
                     console.log('>> Channel supporter dont response');
                     context.close();

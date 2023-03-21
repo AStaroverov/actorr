@@ -9,7 +9,7 @@ onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScop
     if (getMessagePortName('MAIN') === name) {
         return connectMessagePortToActor(
             {
-                ref: name,
+                transmitter: name,
                 map: (envelope) => {
                     switch (envelope.type) {
                         case MULTIPLY_ACTION_TYPE:
@@ -20,7 +20,7 @@ onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScop
                 },
             },
             {
-                ref: actor,
+                transmitter: actor,
                 map: (envelope) => {
                     switch (envelope.type) {
                         case MULTIPLY_RESULT_TYPE:
@@ -36,7 +36,7 @@ onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScop
     if (getMessagePortName('SUM_WORKER') === name) {
         return connectMessagePortToActor(
             {
-                ref: name,
+                transmitter: name,
                 map: (envelope) => {
                     switch (envelope.type) {
                         case SUM_RESULT_TYPE:
@@ -47,7 +47,7 @@ onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScop
                 },
             },
             {
-                ref: actor,
+                transmitter: actor,
                 map: (envelope) => {
                     switch (envelope.type) {
                         case SUM_ACTION_TYPE:

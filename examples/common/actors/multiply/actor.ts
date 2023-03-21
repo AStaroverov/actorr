@@ -1,15 +1,14 @@
 import { createActor } from '../createActor';
-import { createEnvelope } from '../../../../src/envelope';
 import { MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE, TMultiplyActionEnvelope, TMultiplyResultEnvelope } from './defs';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE, TSumActionEnvelope, TSumResultEnvelope } from '../sum/defs';
-import { Envelope } from '../../../../src/types';
-import { responseFactory } from '../../../../src';
+import { createEnvelope, createResponseFactory, Envelope } from '../../../../src';
 
 export function createActorMultiply() {
     return createActor<TMultiplyActionEnvelope | TSumResultEnvelope, TMultiplyResultEnvelope | TSumActionEnvelope>(
         'MULTIPLY',
-        ({ subscribe, unsubscribe, dispatch }) => {
-            subscribe(async (envelope) => {
+        ({ subscribe, dispatch }) => {
+            const createResponse = createResponseFactory(dispatch);
+            const unsubscribe = subscribe(async (envelope) => {
                 if (envelope.type === MULTIPLY_ACTION_TYPE) {
                     const numbers = envelope.payload;
                     let result = numbers[0];
@@ -27,7 +26,7 @@ export function createActorMultiply() {
                         });
                     }
 
-                    responseFactory(dispatch, envelope)(createEnvelope(MULTIPLY_RESULT_TYPE, result));
+                    createResponse(envelope)(createEnvelope(MULTIPLY_RESULT_TYPE, result));
                 }
             });
         },

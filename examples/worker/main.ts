@@ -8,7 +8,7 @@ const worker = new Worker(new URL('../common/workers/sumAndMinMaxActors.ts', imp
 
 await connectActorToWorker(
     {
-        ref: actorMain,
+        transmitter: actorMain,
         map: (envelope) =>
             envelope.type === SUM_ACTION_TYPE || envelope.type === MINMAX_ACTION_TYPE ? envelope : undefined,
     },

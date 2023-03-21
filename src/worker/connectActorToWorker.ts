@@ -1,4 +1,4 @@
-import { Actor, AnyEnvelope, EnvelopeTransmitterWithMapper } from '../types';
+import { Actor, EnvelopeTransmitterWithMapper } from '../types';
 import { createEnvelope } from '../envelope';
 import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
 import { connectActorToMessagePort } from './connectActorToMessagePort';
@@ -21,7 +21,7 @@ export async function connectActorToWorker<A extends Actor, W extends Worker | S
     const workerPort = channel.port2;
     const workerPortName = getMessagePortName(actor.name);
     const postMessage = getWorkerPostMessage(worker);
-    const disconnect = connectActorToMessagePort(_actor, { ref: localPort, map: mapper });
+    const disconnect = connectActorToMessagePort(_actor, { transmitter: localPort, map: mapper });
 
     localPort.start();
     postMessage(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName), [workerPort]);
