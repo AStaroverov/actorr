@@ -1,6 +1,6 @@
 export * from './types';
-export { createActorFactory } from './createActorFactory';
 export { createEnvelope, isEnvelope } from './envelope';
+export { createActorFactory } from './createActorFactory';
 
 export { connectActorToActor } from './connectActorToActor';
 
