@@ -6,8 +6,8 @@ import type {
     SubscribeCallback,
 } from './types';
 import { shallowCopyEnvelope } from './envelope';
-import { createSubscribe, subscribe } from './subscribe';
-import { createDispatch, dispatch } from './dispatch';
+import { createSubscribe } from './subscribe';
+import { createDispatch } from './dispatch';
 
 function createRequestName(type: string) {
     return `Request(${type}[${Date.now()}])`;

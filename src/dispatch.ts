@@ -1,6 +1,6 @@
-import type { AnyEnvelope, Envelope, EnvelopeDispatchTarget, ExtractEnvelope } from './types';
+import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
 import { getMessagePort } from './worker/ports';
-import { Dispatch, ExtractEnvelopeIn, SystemEnvelope } from './types';
+import { SystemEnvelope } from './types';
 
 export function createDispatch<T extends EnvelopeDispatchTarget>(target: T) {
     return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {

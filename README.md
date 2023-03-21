@@ -1,3 +1,10 @@
+# Webactor
+Everything that you need for actor architecture on client
+
+Webactor exports a set of functions to implement a message passing mechanism between different parts of a JavaScript application. It creates and manages message channels, defines message types and provides functions to send and receive messages over these channels. The code uses a combination of maps, finalization registry, weak references, and closure to keep track of messages and message channels, and to prevent memory leaks. The module supports message passing between different threads (Web workers) and between different JavaScript contexts within the same thread.
+
+## Public methods
+
 ##### w/ chatGPT
 
 ### createEnvelope
@@ -21,33 +28,40 @@ The `isEnvelope` method is a utility method that checks whether a given object i
 isEnvelope<T extends Envelope>(some: any): some is T
 ```
 
-##### w/o chatGPT
 ### createActorFactory
+The createActorFactory method is a higher-order function that returns a factory function for creating actors with a given behavior function.
+
+The return function createActorFactory creates an actor that communicates with other actors using a message-passing system. The behavior function defines how the actor should respond to incoming messages.
+
 
 ```typescript
 function createActorFactory(props: { getMailbox: () => Mailbox<Envelope>; }): (name: string, constructor: ActorConstructor) => Actor;
 ```
 
 ### createDispatch / dispatch
+The createDispatch function takes a target argument and returns a dispatch function that can be called with an envelope argument. The dispatch function is a shorthand for calling createDispatch and passing both target and envelope arguments in a single call.
 
+The dispatch function send envelope through target.
 ```typescript
 function createDispatch(target: EnvelopeDispatchTarget): (envelope: Envelope) => void
 function dispatch(target: EnvelopeDispatchTarget, envelope: Envelope): void
 ```
 
 ### connectActorToActor
-
+This function takes in two Actors or Actors with mappers and sets up a bi-directional connection between them.
 ```typescript
 function connectActorToActor(actor1: Actor | EnvelopeTransmitterWithMapper<Actor>, actor2: Actor | EnvelopeTransmitterWithMapper<Actor>): Function;
 ```
 
 ## Request - Response
 ### createRequest
+This function takes a transmitter object as an argument. The function returns another function that is used to make requests to the transmitter
 ```typescript
-createRequest(transmitter: EnvelopeTransmitter): (envelope: Envelope, onResponse: SubscribeCallback) => Function;
+function createRequest(transmitter: EnvelopeTransmitter): (envelope: Envelope, onResponse: SubscribeCallback) => Function;
 ```
 
-### createRequest
+##### w/o chatGPT
+### createResponseFactory
 ```typescript
 function createResponseFactory(dispatch: WithDispatch): (initial: Envelope) => (envelope: Envelope) => void;
 ```
@@ -80,13 +94,10 @@ function connectActorToWorker(actor: Actor, worker: Worker | SharedWorker): Prom
 ```
 ### connectWorkerToWorker
 ```typescript
-function connectWorkerToWorker<W1 extends Worker | SharedWorker, W2 extends Worker | SharedWorker>(worker1: {
-    name: string;
-    worker: W1;
-}, worker2: {
-    name: string;
-    worker: W1;
-}): Promise<() => void>;
+function connectWorkerToWorker(
+    worker1: { name: string; worker: Worker | SharedWorker; },
+    worker2: { name: string; worker: Worker | SharedWorker; }
+): Promise<() => void>;
 
 ```
 ### connectActorToMessagePort
@@ -95,5 +106,5 @@ function connectActorToMessagePort(actor: Actor, port: MessagePort | MessagePort
 ```
 ### onConnectMessagePort
 ```typescript
-onConnectMessagePort(context: DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, callback: (name: MessagePortName) => unknown | Function): VoidFunction;
+function onConnectMessagePort(context: DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, callback: (name: MessagePortName) => unknown | Function): VoidFunction;
 ```
