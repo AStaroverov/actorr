@@ -26,6 +26,11 @@ class WorkerMock {
         });
     }
 
+    terminate() {
+        this.channel.port1.close();
+        this.channel.port2.close();
+    }
+
     postMessage = jest.fn((message: string | object, transferable?: Transferable[]) => {
         this.channel.port1.postMessage({ data: message }, transferable);
     });
@@ -39,6 +44,9 @@ class WorkerMock {
 
 class SharedWorkerMock {
     port = new WorkerMock();
+    terminate() {
+        this.port.terminate();
+    }
 }
 
 class WorkerGlobalScopeMock {
@@ -59,6 +67,11 @@ class WorkerGlobalScopeMock {
     removeEventListener = jest.fn((type: 'message', listener: Function) => {
         this.channel.port2.removeListener(type, listener);
     });
+
+    terminate() {
+        this.channel.port1.close();
+        this.channel.port2.close();
+    }
 }
 
 global.MessageChannel = MessageChannel;
@@ -108,6 +121,8 @@ describe(`Worker`, () => {
         expect(worker.postMessage.mock.calls[2][0]).toEqual(
             createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName),
         );
+
+        worker.terminate();
     });
 
     it(`connectWorkerToWorker`, async () => {
@@ -137,6 +152,9 @@ describe(`Worker`, () => {
         expect(worker2.port.postMessage.mock.lastCall?.[0]).toEqual(
             createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, getMessagePortName(name1)),
         );
+
+        worker1.terminate();
+        worker2.terminate();
     });
 
     it(`onConnectMessagePort`, async () => {
@@ -180,7 +198,7 @@ describe(`Worker`, () => {
 
         workerScope.channel.port1.close();
         workerScope.channel.port2.close();
-        channel.port1.close();
-        channel.port2.close();
+
+        workerScope.terminate();
     });
 });
