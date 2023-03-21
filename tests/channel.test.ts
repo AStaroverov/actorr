@@ -256,9 +256,9 @@ describe(`Channel`, () => {
                     onHeartbeatTimeout(timeout);
                 },
                 {
-                    maxTimeout: 1000,
+                    maxTimeout: 500,
                     checkTimeout: 100,
-                    dispatchTimeout: 300,
+                    dispatchTimeout: 100,
                 },
             );
 
@@ -290,9 +290,9 @@ describe(`Channel`, () => {
 
         setTimeout(() => {
             expect(onHeartbeatTimeout.mock.calls).toHaveLength(1);
-            expect(onHeartbeatTimeout.mock.calls[0][0]).toBeGreaterThan(1000);
+            expect(onHeartbeatTimeout.mock.calls[0][0]).toBeGreaterThanOrEqual(500);
             expect(closeSupportedChannel.mock.calls).toHaveLength(1);
             done();
-        }, 1100);
+        }, 1000);
     });
 });

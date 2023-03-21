@@ -16,15 +16,14 @@ export function createHeartbeat<Out extends AnyEnvelope, In extends AnyEnvelope>
     const maxTimeout = options?.maxTimeout ?? 3000;
     const checkTimeout = options?.checkTimeout ?? 1000;
     const dispatchTimeout = options?.dispatchTimeout ?? 1000;
-    let lastEnvelopeTime: number = Date.now();
+    let currentTimeout: number = 0;
 
     const dispatchIntervalId = setInterval(() => context.dispatch(envelope), dispatchTimeout);
     const checkIntervalId = setInterval(() => {
-        const time = Date.now();
-        const diff = time - lastEnvelopeTime;
-        diff > maxTimeout && panic(diff);
+        currentTimeout = currentTimeout + checkTimeout;
+        currentTimeout >= maxTimeout && panic(currentTimeout);
     }, checkTimeout);
-    const unsubscribe = context.subscribe(() => (lastEnvelopeTime = Date.now()), true);
+    const unsubscribe = context.subscribe(() => (currentTimeout = 0), true);
 
     return () => {
         clearInterval(dispatchIntervalId);
