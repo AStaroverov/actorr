@@ -1,6 +1,7 @@
 import { EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
 
 export const identity = <T = any>(v: T) => v;
+export const call = (fn: Function) => fn();
 export const noop = (): any => {};
 export const once = <T extends (...args: any[]) => void>(fn: T): T => {
     return <T>((...args: any[]) => {
