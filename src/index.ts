@@ -20,7 +20,7 @@ export { connectActorToWorker, connectWorkerToActor } from './worker/connectActo
 export { connectMessagePortToActor, connectActorToMessagePort } from './worker/connectActorToMessagePort';
 
 // Advanced public methods
-export { getMessagePortName } from './utils';
+export { createMessagePortName } from './utils';
 export { createDispatch, dispatch } from './dispatch';
 export { createSubscribe, subscribe } from './subscribe';
 export {

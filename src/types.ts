@@ -13,6 +13,7 @@ export type Envelope<T extends string, P> = {
     payload: P;
     transferable: undefined | Transferable[];
 
+    threadId: string;
     routePassed: undefined | string;
     routeAnnounced: undefined | string;
 };

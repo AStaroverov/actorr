@@ -1,8 +1,7 @@
 import { createEnvelope } from '../envelope';
 import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
-import { getMessagePortName } from '../utils';
-import { getWorkerPostMessage } from './utils';
-import { waitWorker } from './waitWorker';
+import { createMessagePortName } from '../utils';
+import { getWorkerMessagePort, waitWorker } from './utils';
 
 export async function connectWorkerToWorker<W1 extends Worker | SharedWorker, W2 extends Worker | SharedWorker>(
     worker1: { name: string; worker: W1 },
@@ -12,18 +11,18 @@ export async function connectWorkerToWorker<W1 extends Worker | SharedWorker, W2
 
     const channel = new MessageChannel();
 
-    const workerName1 = getMessagePortName(worker1.name);
-    const workerName2 = getMessagePortName(worker2.name);
+    const workerName1 = createMessagePortName(worker1.name);
+    const workerName2 = createMessagePortName(worker2.name);
 
-    const postMessage1 = getWorkerPostMessage(worker1.worker);
-    const postMessage2 = getWorkerPostMessage(worker2.worker);
+    const messagePort1 = getWorkerMessagePort(worker1.worker);
+    const messagePort2 = getWorkerMessagePort(worker2.worker);
 
-    postMessage1(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerName2), [channel.port2]);
-    postMessage2(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerName1), [channel.port1]);
+    messagePort1.postMessage(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerName2), [channel.port2]);
+    messagePort2.postMessage(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerName1), [channel.port1]);
 
     return () => {
-        postMessage1(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerName2));
-        postMessage2(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerName1));
+        messagePort1.postMessage(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerName2));
+        messagePort2.postMessage(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerName1));
         channel.port1.close();
         channel.port2.close();
     };

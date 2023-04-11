@@ -1,4 +1,4 @@
-import { onConnectMessagePort, connectMessagePortToActor, getMessagePortName } from '../../../src';
+import { connectMessagePortToActor, createMessagePortName, onConnectMessagePort } from '../../../src';
 import { createActorMultiply } from '../actors/multiply/actor';
 import { MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE } from '../actors/multiply/defs';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE } from '../actors/sum/defs';
@@ -6,7 +6,7 @@ import { SUM_ACTION_TYPE, SUM_RESULT_TYPE } from '../actors/sum/defs';
 const actor = createActorMultiply().launch();
 
 onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
-    if (getMessagePortName('MAIN') === name) {
+    if (createMessagePortName('MAIN') === name) {
         return connectMessagePortToActor(
             {
                 transmitter: name,
@@ -33,7 +33,7 @@ onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScop
         );
     }
 
-    if (getMessagePortName('SUM_WORKER') === name) {
+    if (createMessagePortName('SUM_WORKER') === name) {
         return connectMessagePortToActor(
             {
                 transmitter: name,

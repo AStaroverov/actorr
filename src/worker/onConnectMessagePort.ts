@@ -1,15 +1,14 @@
 import type { ConnectEnvelope, DisconnectEnvelope, MessagePortName } from './types';
 import { isEnvelope } from '../envelope';
-import { setMessagePort, deleteMessagePort, onMessagePortFinalize } from './ports';
+import { deleteMessagePort, onMessagePortFinalize, setMessagePort } from './ports';
 import {
-    isSharedWorkerScope,
-    isDedicatedWorkerScope,
     CONNECT_MESSAGE_PORT_TYPE,
     DISCONNECT_MESSAGE_PORT_TYPE,
-    PING,
-    PONG,
+    isDedicatedWorkerScope,
+    isSharedWorkerScope,
 } from './defs';
 import { noop } from '../utils';
+import { PING, PONG } from '../defs';
 
 const dependencies = <const>{
     isDedicatedWorkerScope,
@@ -20,7 +19,7 @@ const dependencies = <const>{
 
 export function onConnectMessagePort(
     context: DedicatedWorkerGlobalScope | SharedWorkerGlobalScope,
-    callback: (name: MessagePortName) => unknown | Function,
+    callback: (name: MessagePortName) => void | Function,
     { isDedicatedWorkerScope, isSharedWorkerScope, setMessagePort, deleteMessagePort } = dependencies,
 ): VoidFunction {
     if (isDedicatedWorkerScope(context)) {
@@ -58,10 +57,10 @@ export function onConnectMessagePort(
                 port.start();
                 setMessagePort(name, port);
 
-                const onFinalize = callback(name);
+                const dispose = callback(name);
 
-                if (typeof onFinalize === 'function') {
-                    onMessagePortFinalize(name, onFinalize);
+                if (typeof dispose === 'function') {
+                    onMessagePortFinalize(name, dispose);
                 }
             }
 

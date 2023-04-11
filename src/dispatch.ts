@@ -1,15 +1,12 @@
 import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
-import { getMessagePort } from './worker/ports';
 import { SystemEnvelope } from './types';
+import { getMessagePort } from './worker/ports';
 
 export function createDispatch<T extends EnvelopeDispatchTarget>(target: T) {
     return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {
         if (typeof target === 'string') {
             queueMicrotask(() => {
-                const port = getMessagePort(target);
-                if (port !== undefined) {
-                    port.postMessage(envelope, envelope.transferable as any);
-                }
+                getMessagePort(target)?.postMessage(envelope, envelope.transferable as any);
             });
         } else if (typeof target === 'object' && 'postMessage' in target) {
             target.postMessage(envelope, envelope.transferable as any);

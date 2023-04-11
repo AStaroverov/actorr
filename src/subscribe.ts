@@ -1,8 +1,8 @@
-import { getMessagePort } from './worker/ports';
 import { isEnvelope } from './envelope';
 import { noop } from './utils';
-import { AnyEnvelope, Subscribe, SubscribeCallback, EnvelopeSubscribeSource, SystemEnvelope } from './types';
+import { AnyEnvelope, EnvelopeSubscribeSource, Subscribe, SubscribeCallback, SystemEnvelope } from './types';
 import { isSystemEnvelope } from './isSystemEnvelope';
+import { getMessagePort } from './worker/ports';
 
 function createWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
     return withSystemEnvelopes === true ? callback : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
@@ -11,14 +11,13 @@ function createWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>, wi
 function createPostMessageWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>) {
     return (event: MessageEvent) => {
         if (isEnvelope(event.data)) {
-            queueMicrotask(() => callback(event.data));
+            callback(event.data as T);
         }
     };
 }
 
-export function createSubscribe<T extends AnyEnvelope>(_source: EnvelopeSubscribeSource<T>): Subscribe<T> {
+export function createSubscribe<T extends AnyEnvelope>(source: EnvelopeSubscribeSource<T>): Subscribe<T> {
     return function subscribe(callback, withSystemEnvelopes) {
-        const source = typeof _source === 'string' ? getMessagePort(_source) : _source;
         const wrapper = createWrapper(callback, withSystemEnvelopes);
 
         if (typeof source === 'object' && 'subscribe' in source) {
@@ -26,10 +25,17 @@ export function createSubscribe<T extends AnyEnvelope>(_source: EnvelopeSubscrib
             return source.subscribe(wrapper, true);
         }
 
-        if (typeof source === 'object' && 'postMessage' in source) {
+        if (typeof source === 'string' || (typeof source === 'object' && 'postMessage' in source)) {
+            const messagePort = typeof source === 'string' ? getMessagePort(source) : source;
             const postMessageWrapper = createPostMessageWrapper(wrapper);
-            source.addEventListener('message', postMessageWrapper);
-            return () => source.removeEventListener('message', postMessageWrapper);
+
+            messagePort?.addEventListener('message', postMessageWrapper);
+
+            return () => {
+                // prevent stuck port inside closure
+                const messagePort = typeof source === 'string' ? getMessagePort(source) : source;
+                messagePort?.removeEventListener('message', postMessageWrapper);
+            };
         }
 
         return noop;

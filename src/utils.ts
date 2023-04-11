@@ -1,17 +1,16 @@
 import { EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
+import { PING, PONG } from './defs';
 
 export const identity = <T = any>(v: T) => v;
-export const call = (fn: Function) => fn();
 export const noop = (): any => {};
-export const once = <T extends (...args: any[]) => void>(fn: T): T => {
-    return <T>((...args: any[]) => {
-        if (fn !== undefined) {
-            fn.apply(null, args);
-            // @ts-ignore
-            fn = undefined;
-        }
-    });
-};
+
+export function createShortRandomString() {
+    return Math.round(Math.random() * Date.now()).toString(32);
+}
+
+export function createMessagePortName(base: string) {
+    return `MessagePort(${base})`;
+}
 
 export function getEnvelopeTransmitter<T>(transmitter: T | EnvelopeTransmitterWithMapper<T>): T {
     return typeof transmitter === 'object' && 'transmitter' in transmitter!
@@ -33,10 +32,22 @@ export function getName<T extends EnvelopeTransmitter>(source: T) {
     throw new Error('Can`t detect transmitter name');
 }
 
-export function getMessagePortName(base: string) {
-    return `MessagePort(${base})`;
-}
+export function waitMessagePort(port: MessagePort) {
+    const sendPing = () => port.postMessage(PING);
 
-export function getShortRandomString() {
-    return Math.round(Math.random() * Date.now()).toString(32);
+    return new Promise((resolve) => {
+        const intervalId = setInterval(sendPing, 25);
+        const listener = (event: MessageEvent) => {
+            if (event.data === PONG) {
+                resolve(undefined);
+                clearInterval(intervalId);
+                port.removeEventListener('message', listener);
+            }
+        };
+
+        port.start();
+        port.addEventListener('message', listener);
+
+        queueMicrotask(sendPing);
+    });
 }

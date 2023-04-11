@@ -2,9 +2,8 @@ import { Actor, EnvelopeTransmitterWithMapper } from '../types';
 import { createEnvelope } from '../envelope';
 import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
 import { connectActorToMessagePort } from './connectActorToMessagePort';
-import { getMessagePortName, getMapper, getEnvelopeTransmitter } from '../utils';
-import { getWorkerPostMessage } from './utils';
-import { waitWorker } from './waitWorker';
+import { createMessagePortName, getEnvelopeTransmitter, getMapper } from '../utils';
+import { getWorkerMessagePort, waitWorker } from './utils';
 
 export async function connectActorToWorker<A extends Actor, W extends Worker | SharedWorker>(
     _actor: A | EnvelopeTransmitterWithMapper<A>,
@@ -19,16 +18,16 @@ export async function connectActorToWorker<A extends Actor, W extends Worker | S
     const channel = new MessageChannel();
     const localPort = channel.port1;
     const workerPort = channel.port2;
-    const workerPortName = getMessagePortName(actor.name);
-    const postMessage = getWorkerPostMessage(worker);
+    const workerPortName = createMessagePortName(actor.name);
+    const workerMessagePort = getWorkerMessagePort(worker);
     const disconnect = connectActorToMessagePort(_actor, { transmitter: localPort, map: mapper });
 
     localPort.start();
-    postMessage(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName), [workerPort]);
+    workerMessagePort.postMessage(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName), [workerPort]);
 
     return () => {
         disconnect();
-        postMessage(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName));
+        workerMessagePort.postMessage(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName));
         localPort.close();
     };
 }

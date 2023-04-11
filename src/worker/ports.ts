@@ -1,7 +1,7 @@
 import { MessagePortName } from './types';
 
 const mapWorkerNameToWeakPort = new Map<MessagePortName, WeakRef<MessagePort>>();
-const mapWorkerNameToFinalize = new Map<MessagePortName, Array<Function>>();
+const mapWorkerNameToFinalize = new Map<MessagePortName, Set<Function>>();
 const finalizationRegistry = new FinalizationRegistry<MessagePortName>((holdName) => {
     deleteMessagePort(holdName);
 });
@@ -47,10 +47,12 @@ export const getAllMessagePorts = () => {
         .filter((entry): entry is [MessagePortName, MessagePort] => entry[1] !== undefined);
 };
 
-export const onMessagePortFinalize = (name: MessagePortName, fn: Function) => {
+export const onMessagePortFinalize = (name: MessagePortName, fn: Function): Function => {
     if (!mapWorkerNameToFinalize.has(name)) {
-        mapWorkerNameToFinalize.set(name, []);
+        mapWorkerNameToFinalize.set(name, new Set());
     }
 
-    mapWorkerNameToFinalize.get(name)!.push(fn);
+    mapWorkerNameToFinalize.get(name)!.add(fn);
+
+    return () => mapWorkerNameToFinalize.get(name)?.delete(fn);
 };

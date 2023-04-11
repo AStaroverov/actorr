@@ -1,5 +1,11 @@
 import { Envelope } from '../types';
 
+export enum EChannelCloseReason {
+    Manual = 'Manual',
+    Destroy = 'Destroy',
+    LoseChannel = 'LoseChannel',
+}
+
 export const CHANNEL_OPEN_TYPE = '__CHANNEL_OPEN_TYPE__' as const;
 export type ChannelOpenEnvelope = Envelope<typeof CHANNEL_OPEN_TYPE, MessagePort>;
 

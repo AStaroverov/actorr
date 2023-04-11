@@ -1,33 +1,26 @@
 import { createActor } from '../createActor';
-import { TPongEnvelope, TPingEnvelope, TOpenChannelEnvelope, PING_TYPE, OPEN_CHANNEL_TYPE } from './defs';
-import { supportChannelFactory } from '../../../../src/channel/supportChannelFactory';
-import { createEnvelope } from '../../../../src';
-import { createHeartbeat } from '../../../../src/heartbeat';
+import { PING_TYPE, TPingEnvelope } from './defs';
+import { createEnvelope, supportChannelFactory } from '../../../../src';
 
 export function createPingPongActor(delay: number) {
-    return createActor<TPongEnvelope | TOpenChannelEnvelope, TPingEnvelope>('PING_PONG', (context) => {
+    return createActor<TPingEnvelope, TPingEnvelope>('PING_PONG', (context) => {
         const supportChannel = supportChannelFactory(context);
 
         context.subscribe((envelope) => {
-            if (envelope.type === OPEN_CHANNEL_TYPE) {
-                const close = supportChannel<TPongEnvelope, TPingEnvelope>(envelope, (ctx) => {
-                    ctx.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1));
-
-                    const closePing = createHeartbeat(ctx, () => {
-                        console.log('>> Channel requester dont response');
-                    });
-
+            if (envelope.type === PING_TYPE) {
+                const close = supportChannel<TPingEnvelope, TPingEnvelope>(envelope, (channel) => {
+                    channel.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1));
                     let pingTimeoutId: undefined | number = undefined;
-                    const closeReaction = ctx.subscribe((envelope) => {
-                        console.log('>>', delay, envelope.type, envelope.payload);
-                        pingTimeoutId = setTimeout(
-                            () => ctx.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1)),
+                    const closeReaction = channel.subscribe((envelope) => {
+                        console.log('>> n', envelope.payload);
+                        pingTimeoutId = self.setTimeout(
+                            () => channel.dispatch(createEnvelope(PING_TYPE, envelope.payload + 1)),
                             delay,
-                        ) as unknown as number;
+                        );
                     });
 
                     return () => {
-                        closePing();
+                        console.log('>> close ping pong channel');
                         closeReaction();
                         clearTimeout(pingTimeoutId);
                     };
