@@ -32,21 +32,26 @@ export function getName<T extends EnvelopeTransmitter>(source: T) {
     throw new Error('Can`t detect transmitter name');
 }
 
-export function waitMessagePort(port: MessagePort) {
+export function waitMessagePort(port: MessagePort, signal?: AbortSignal) {
     const sendPing = () => port.postMessage(PING);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const intervalId = setInterval(sendPing, 25);
-        const listener = (event: MessageEvent) => {
+        const portListener = (event: MessageEvent) => {
             if (event.data === PONG) {
                 resolve(undefined);
                 clearInterval(intervalId);
-                port.removeEventListener('message', listener);
+                port.removeEventListener('message', portListener);
+                signal?.removeEventListener('abort', abortListener);
             }
+        };
+        const abortListener = () => {
+            reject(new Error('Aborted'));
         };
 
         port.start();
-        port.addEventListener('message', listener);
+        port.addEventListener('message', portListener);
+        signal?.addEventListener('abort', abortListener);
 
         queueMicrotask(sendPing);
     });

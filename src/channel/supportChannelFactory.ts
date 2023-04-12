@@ -2,7 +2,7 @@ import type { ExtractEnvelopeIn, ExtractEnvelopeOut } from '../types';
 import { EnvelopeTransmitter } from '../types';
 import type { SupportChanelContext } from './types';
 import { createResponseFactory } from '../response';
-import { noop, waitMessagePort } from '../utils';
+import { waitMessagePort } from '../utils';
 import { createEnvelope } from '../envelope';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, EChannelCloseReason } from './defs';
 import { createDispatch } from '../dispatch';
@@ -13,7 +13,7 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
     const dispatch = createDispatch(transmitter);
     const createResponse = createResponseFactory(dispatch);
 
-    return async function supportChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
+    return function supportChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         target: ExtractEnvelopeIn<T>,
         onOpen: (context: SupportChanelContext<In, Out>) => void | ((reason: EChannelCloseReason) => void),
     ) {
@@ -36,19 +36,26 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             close(EChannelCloseReason.LoseChannel),
         );
 
+        disposes.push(unsubscribeOnThreadTerminate, unsubscribeOnCloseChannel);
+
         createResponse<Out>(target)(createEnvelope(CHANNEL_OPEN_TYPE, remotePort, [remotePort]));
-        await waitMessagePort(localPort);
 
-        const dispose = onOpen({ dispatch: dispatchToChannel, subscribe: subscribeToChannel });
+        const abortController = new AbortController();
+        const onConnect = waitMessagePort(localPort, abortController.signal)
+            .then(() => {
+                const dispose = onOpen({ dispatch: dispatchToChannel, subscribe: subscribeToChannel });
+                typeof dispose === 'function' && disposes.push(dispose);
+            })
+            .finally(() => {
+                disposes.push(
+                    () => dispatch(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
+                    () => localPort.close(),
+                );
+            });
 
-        disposes.push(
-            unsubscribeOnThreadTerminate,
-            unsubscribeOnCloseChannel,
-            dispose ?? noop,
-            () => dispatch(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
-            () => localPort.close(),
-        );
-
-        return () => close(EChannelCloseReason.Manual);
+        return () => {
+            abortController.abort();
+            onConnect.finally(() => close(EChannelCloseReason.Manual));
+        };
     };
 }
