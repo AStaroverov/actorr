@@ -2,9 +2,9 @@ import type { ExtractEnvelopeIn, ExtractEnvelopeOut } from '../types';
 import { EnvelopeTransmitter } from '../types';
 import type { SupportChanelContext } from './types';
 import { createResponseFactory } from '../response';
-import { waitMessagePort } from '../utils';
+import { noop, waitMessagePort } from '../utils';
 import { createEnvelope } from '../envelope';
-import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, EChannelCloseReason } from './defs';
+import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason } from './defs';
 import { createDispatch } from '../dispatch';
 import { createSubscribe } from '../subscribe';
 import { subscribeOnThreadTerminate } from '../locks';
@@ -15,10 +15,10 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
 
     return function supportChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         target: ExtractEnvelopeIn<T>,
-        onOpen: (context: SupportChanelContext<In, Out>) => void | ((reason: EChannelCloseReason) => void),
+        onOpen: (context: SupportChanelContext<In, Out>) => void | ((reason: ChannelCloseReason) => void),
     ) {
         const disposes: Array<Function> = [];
-        const close = (reason: EChannelCloseReason) => disposes.forEach((dispose) => dispose(reason));
+        const close = (reason: ChannelCloseReason) => disposes.forEach((dispose) => dispose(reason));
 
         const channel = new MessageChannel();
         const localPort = channel.port1;
@@ -29,11 +29,11 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
         const dispatchToChannel = createDispatch(localPort);
         const subscribeToChannel = createSubscribe<In>(localPort);
         const unsubscribeOnCloseChannel = subscribeToChannel(
-            (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && close(EChannelCloseReason.Manual),
+            (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && close(ChannelCloseReason.Manual),
             true,
         );
         const unsubscribeOnThreadTerminate = subscribeOnThreadTerminate(target.threadId, () =>
-            close(EChannelCloseReason.LoseChannel),
+            close(ChannelCloseReason.LoseChannel),
         );
 
         disposes.push(unsubscribeOnThreadTerminate, unsubscribeOnCloseChannel);
@@ -55,7 +55,7 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
 
         return () => {
             abortController.abort();
-            onConnect.finally(() => close(EChannelCloseReason.Manual));
+            onConnect.finally(() => close(ChannelCloseReason.Manual)).catch(noop);
         };
     };
 }

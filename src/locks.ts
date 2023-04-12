@@ -1,4 +1,4 @@
-import { createShortRandomString } from './utils';
+import { createShortRandomString, noop } from './utils';
 import { isDedicatedWorkerScope, isSharedWorkerScope, isWindowScope } from './worker/defs';
 
 const threadName = isSharedWorkerScope(self)
@@ -15,6 +15,6 @@ void navigator.locks.request(threadId, () => new Promise(() => {}));
 
 export function subscribeOnThreadTerminate(threadId: string, callback: Function) {
     const locksController = new AbortController();
-    void navigator.locks.request(threadId, { signal: locksController.signal }, callback as () => void);
+    void navigator.locks.request(threadId, { signal: locksController.signal }, callback as () => void).catch(noop);
     return () => locksController.abort();
 }

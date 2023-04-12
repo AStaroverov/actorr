@@ -1,6 +1,6 @@
 import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut } from '../types';
 import { createRequest } from '../request';
-import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelOpenEnvelope, EChannelCloseReason } from './defs';
+import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason, ChannelOpenEnvelope } from './defs';
 import { noop } from '../utils';
 import { OpenChanelContext } from './types';
 import { createDispatch } from '../dispatch';
@@ -14,11 +14,11 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
 
     return function openChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         envelope: ExtractEnvelopeOut<T>,
-        onOpen: (context: OpenChanelContext<In, Out>) => void | ((reason: EChannelCloseReason) => void),
+        onOpen: (context: OpenChanelContext<In, Out>) => void | ((reason: ChannelCloseReason) => void),
     ) {
         const mapDisposes = new Map<string, Function[]>();
 
-        const createCloseChannel = (routeName: string) => (reason: EChannelCloseReason) => {
+        const createCloseChannel = (routeName: string) => (reason: ChannelCloseReason) => {
             mapDisposes.has(routeName) && mapDisposes.get(routeName)!.forEach((dispose) => dispose(reason));
             mapDisposes.delete(routeName);
         };
@@ -40,13 +40,13 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 const dispatch = createDispatch(port);
                 const subscribe = createSubscribe<In>(port);
                 const unsubscribeOnCloseChannel = subscribe(
-                    (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && close(EChannelCloseReason.Manual),
+                    (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && close(ChannelCloseReason.Manual),
                     true,
                 );
                 const unsubscribeOnThreadTerminate = subscribeOnThreadTerminate(envelope.threadId, () =>
-                    close(EChannelCloseReason.LoseChannel),
+                    close(ChannelCloseReason.LoseChannel),
                 );
-                const dispose = onOpen({ dispatch, subscribe, close: () => close(EChannelCloseReason.Manual) });
+                const dispose = onOpen({ dispatch, subscribe, close: () => close(ChannelCloseReason.Manual) });
 
                 mapDisposes.set(channelRoute, [
                     unsubscribeOnCloseChannel,
@@ -62,7 +62,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
             closeRequestResponse();
 
             for (const disposes of mapDisposes.values()) {
-                disposes.forEach((dispose) => dispose(EChannelCloseReason.Destroy));
+                disposes.forEach((dispose) => dispose(ChannelCloseReason.Destroy));
             }
 
             mapDisposes.clear();

@@ -8,6 +8,7 @@ export { createRequest } from './request';
 export { createResponseFactory } from './response';
 
 export * from './channel/types';
+export { ChannelCloseReason } from './channel/defs';
 export { openChannelFactory } from './channel/openChannelFactory';
 export { supportChannelFactory } from './channel/supportChannelFactory';
 export type { HeartbeatOptions } from './heartbeat';
