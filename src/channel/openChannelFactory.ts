@@ -1,4 +1,4 @@
-import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut } from '../types';
+import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { createRequest } from '../request';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason, ChannelOpenEnvelope } from './defs';
 import { noop } from '../utils';
@@ -14,11 +14,11 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
 
     return function openChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         envelope: ExtractEnvelopeOut<T>,
-        onOpen: (context: OpenChanelContext<In, Out>) => void | ((reason: ChannelCloseReason) => void),
+        onOpen: (context: OpenChanelContext<In, Out>) => void | ((reason: ValueOf<typeof ChannelCloseReason>) => void),
     ) {
         const mapDisposes = new Map<string, Function[]>();
 
-        const createCloseChannel = (routeName: string) => (reason: ChannelCloseReason) => {
+        const createCloseChannel = (routeName: string) => (reason: ValueOf<typeof ChannelCloseReason>) => {
             mapDisposes.has(routeName) && mapDisposes.get(routeName)!.forEach((dispose) => dispose(reason));
             mapDisposes.delete(routeName);
         };

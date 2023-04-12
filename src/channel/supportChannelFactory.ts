@@ -1,4 +1,4 @@
-import type { ExtractEnvelopeIn, ExtractEnvelopeOut } from '../types';
+import type { ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { EnvelopeTransmitter } from '../types';
 import type { SupportChanelContext } from './types';
 import { createResponseFactory } from '../response';
@@ -15,10 +15,12 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
 
     return function supportChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         target: ExtractEnvelopeIn<T>,
-        onOpen: (context: SupportChanelContext<In, Out>) => void | ((reason: ChannelCloseReason) => void),
+        onOpen: (
+            context: SupportChanelContext<In, Out>,
+        ) => void | ((reason: ValueOf<typeof ChannelCloseReason>) => void),
     ) {
         const disposes: Array<Function> = [];
-        const close = (reason: ChannelCloseReason) => disposes.forEach((dispose) => dispose(reason));
+        const close = (reason: ValueOf<typeof ChannelCloseReason>) => disposes.forEach((dispose) => dispose(reason));
 
         const channel = new MessageChannel();
         const localPort = channel.port1;

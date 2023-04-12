@@ -2,6 +2,8 @@ import { ChannelCloseEnvelope, ChannelOpenEnvelope } from './channel/defs';
 import { HeartbeatEnvelope } from './heartbeat/def';
 import { MessagePortName } from './worker/types';
 
+export type ValueOf<T> = T[keyof T];
+
 export type Mailbox<T extends AnyEnvelope = AnyEnvelope> = {
     destroy?: () => void;
     dispatch: (envelope: T) => unknown;
