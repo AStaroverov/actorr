@@ -52,8 +52,6 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 () => dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
                 () => port.close(),
             ]);
-
-            // checkAsReady(port);
         });
 
         return function closeOpenedChannels() {

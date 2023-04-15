@@ -10,8 +10,7 @@ import { createSubscribe } from '../subscribe';
 import { subscribeOnThreadTerminate } from '../locks';
 
 export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
-    const dispatch = createDispatch(transmitter);
-    const createResponse = createResponseFactory(dispatch);
+    const createResponse = createResponseFactory(createDispatch(transmitter));
 
     return function supportChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         target: ExtractEnvelopeIn<T>,
@@ -41,11 +40,9 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             unsubscribeOnThreadTerminate,
             unsubscribeOnCloseChannel,
             dispose ?? noop,
-            () => dispatch(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
+            () => dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
             () => (localPort.close(), remotePort.close()),
         );
-
-        // checkAsReady(localPort);
 
         return () => closeChannel(ChannelCloseReason.Manual);
     };
