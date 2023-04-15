@@ -42,7 +42,7 @@ describe(`Worker`, () => {
             context.dispatch(createEnvelope(`test`, `test`));
         });
         const worker = new WorkerMock();
-        const workerPortName = createMessagePortName(actor.name);
+        const workerPortName = createMessagePortName(`worker|${actor.name}`);
         const disconnect = connectActorToWorker(actor, worker as unknown as Worker);
 
         await sleep(10);

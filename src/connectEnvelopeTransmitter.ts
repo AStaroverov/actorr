@@ -1,7 +1,7 @@
 import type { AnyEnvelope, Envelope, EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
-import { getEnvelopeTransmitter, getMapper, getName } from './utils';
+import { getEnvelopeTransmitter, getTransmitterMapper, getTransmitterName } from './utils';
 import { subscribe } from './subscribe';
-import { dispatch } from './dispatch';
+import { createDispatch } from './dispatch';
 import { extendRoute, reduceRoute, routeEndsWith } from './route';
 import { shallowCopyEnvelope } from './envelope';
 import { isSystemEnvelope } from './isSystemEnvelope';
@@ -12,10 +12,10 @@ export function connectEnvelopeTransmitter<T1 extends EnvelopeTransmitter, T2 ex
 ): Function {
     const transmitter1 = getEnvelopeTransmitter(_transmitter1);
     const transmitter2 = getEnvelopeTransmitter(_transmitter2);
-    const mapper1 = getMapper(_transmitter1);
-    const mapper2 = getMapper(_transmitter2);
-    const name1 = getName(transmitter1);
-    const name2 = getName(transmitter2);
+    const mapper1 = getTransmitterMapper(_transmitter1);
+    const mapper2 = getTransmitterMapper(_transmitter2);
+    const name1 = getTransmitterName(transmitter1);
+    const name2 = getTransmitterName(transmitter2);
     const unsub1 = subscribe(transmitter1, createRedispatch(name1, mapper1, name2, transmitter2), true);
     const unsub2 = subscribe(transmitter2, createRedispatch(name2, mapper2, name1, transmitter1), true);
 
@@ -31,6 +31,7 @@ function createRedispatch(
     targetName: string,
     target: EnvelopeTransmitter,
 ) {
+    const dispatch = createDispatch(target);
     return function redispatch(_envelope: Envelope<any, any>) {
         const envelope = isSystemEnvelope(_envelope) ? _envelope : sourceMapper(_envelope);
 
@@ -46,9 +47,9 @@ function createRedispatch(
         copy.routeAnnounced = reduceAnnouncedPart(copy, targetName);
 
         try {
-            dispatch(target, copy);
+            dispatch(copy);
         } catch (err) {
-            console.error(new Error('Error on dispatch envelope', { cause: err }));
+            console.error(err);
         }
     };
 }

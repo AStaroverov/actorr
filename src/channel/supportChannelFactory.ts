@@ -2,7 +2,7 @@ import type { ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { EnvelopeTransmitter } from '../types';
 import type { ChannelDispose, SupportChanelContext } from './types';
 import { createResponseFactory } from '../response';
-import { noop } from '../utils';
+import { createMessagePortName, noop, setPortName } from '../utils';
 import { createEnvelope } from '../envelope';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason } from './defs';
 import { createDispatch } from '../dispatch';
@@ -19,6 +19,8 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
         const channel = new MessageChannel();
         const localPort = channel.port1;
         const remotePort = channel.port2;
+
+        setPortName(localPort, createMessagePortName(target.routePassed));
 
         createResponse<Out>(target)(createEnvelope(CHANNEL_OPEN_TYPE, remotePort, [remotePort]));
 
@@ -41,7 +43,7 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             unsubscribeOnCloseChannel,
             dispose ?? noop,
             () => dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
-            () => (localPort.close(), remotePort.close()),
+            () => setTimeout(() => localPort.close()),
         );
 
         return () => closeChannel(ChannelCloseReason.Manual);

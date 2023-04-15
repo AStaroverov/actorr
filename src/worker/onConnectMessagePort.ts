@@ -6,7 +6,7 @@ import {
     isDedicatedWorkerScope,
     isSharedWorkerScope,
 } from './defs';
-import { checkPortAsReady, isPortReadyCheck, noop } from '../utils';
+import { checkPortAsReady, isPortReadyCheck, noop, setPortName } from '../utils';
 import { currentThreadId, subscribeOnThreadTerminate } from '../locks';
 
 const dependencies = <const>{
@@ -58,6 +58,9 @@ function createListener(
             const envelope = event.data as ConnectEnvelope;
             const name = envelope.payload;
             const port = event.ports[0];
+
+            setPortName(port, name);
+
             const disposes: Array<Function> = [];
             const disconnect = () => disposes.forEach((dispose) => dispose());
             const callbackDispose = callback(name, port);

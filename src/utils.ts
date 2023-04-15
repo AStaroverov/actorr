@@ -8,7 +8,7 @@ export function createShortRandomString() {
     return Math.round(Math.random() * Date.now()).toString(32);
 }
 
-export function createMessagePortName(base: string) {
+export function createMessagePortName(base: string = createShortRandomString()) {
     return `MessagePort(${base})`;
 }
 
@@ -18,16 +18,24 @@ export function getEnvelopeTransmitter<T>(transmitter: T | EnvelopeTransmitterWi
         : (transmitter as T);
 }
 
-export function getMapper<T>(transmitter: T | EnvelopeTransmitterWithMapper<T>) {
+export function getTransmitterMapper<T>(transmitter: T | EnvelopeTransmitterWithMapper<T>) {
     return (typeof transmitter === 'object' && 'transmitter' in transmitter! ? transmitter.map : undefined) ?? identity;
 }
 
-export function getName<T extends EnvelopeTransmitter>(source: T) {
-    if (typeof source === 'string') return source;
-    if (typeof source === 'object') {
-        if ('name' in source) return source.name;
-        if (source instanceof MessagePort) return 'MessagePort';
-    }
+const mapPortToName = new WeakMap<MessagePort, string>();
+
+export function setPortName(port: MessagePort, name: string) {
+    mapPortToName.set(port, name);
+}
+
+export function getPortName(port: MessagePort) {
+    if (!mapPortToName.has(port)) setPortName(port, createMessagePortName());
+    return mapPortToName.get(port)!;
+}
+
+export function getTransmitterName<T extends EnvelopeTransmitter>(source: T) {
+    if ('name' in source) return source.name;
+    if (typeof source === 'object' && 'postMessage' in source) return getPortName(source);
 
     throw new Error('Can`t detect transmitter name');
 }
