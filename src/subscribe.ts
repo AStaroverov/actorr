@@ -1,6 +1,7 @@
 import { isEnvelope } from './envelope';
 import { AnyEnvelope, EnvelopeSubscribeSource, Subscribe, SubscribeCallback, SystemEnvelope } from './types';
 import { isSystemEnvelope } from './isSystemEnvelope';
+import { checkPortAsReady, isPortReadyCheck } from './utils';
 
 function createWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
     return withSystemEnvelopes === true ? callback : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
@@ -14,6 +15,19 @@ function createPostMessageWrapper<T extends AnyEnvelope>(callback: SubscribeCall
     };
 }
 
+const listenedPorts = new WeakSet<MessagePort>();
+function addReadyCheckApproval(port: MessagePort) {
+    if (listenedPorts.has(port)) return;
+
+    listenedPorts.add(port);
+
+    port.addEventListener('message', (event) => {
+        if (isPortReadyCheck(event as MessageEvent)) {
+            checkPortAsReady(port);
+        }
+    });
+}
+
 export function createSubscribe<T extends AnyEnvelope>(source: EnvelopeSubscribeSource<T>): Subscribe<T> {
     return function subscribe(callback, withSystemEnvelopes) {
         const wrapper = createWrapper(callback, withSystemEnvelopes);
@@ -25,7 +39,12 @@ export function createSubscribe<T extends AnyEnvelope>(source: EnvelopeSubscribe
 
         if (typeof source === 'object' && 'postMessage' in source) {
             const postMessageWrapper = createPostMessageWrapper(wrapper);
+
+            source.start();
             source.addEventListener('message', postMessageWrapper);
+
+            addReadyCheckApproval(source);
+
             return () => source.removeEventListener('message', postMessageWrapper);
         }
 

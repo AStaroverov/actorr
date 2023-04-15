@@ -1,15 +1,15 @@
-import { connectMessagePortToActor, createMessagePortName, onConnectMessagePort } from '../../../src';
+import { connectMessagePortToActor, onConnectMessagePort } from '../../../src';
 import { createActorMultiply } from '../actors/multiply/actor';
 import { MULTIPLY_ACTION_TYPE, MULTIPLY_RESULT_TYPE } from '../actors/multiply/defs';
 import { SUM_ACTION_TYPE, SUM_RESULT_TYPE } from '../actors/sum/defs';
 
 const actor = createActorMultiply().launch();
 
-onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
-    if (createMessagePortName('MAIN') === name) {
+onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name, port) => {
+    if (name.includes('MAIN')) {
         return connectMessagePortToActor(
             {
-                transmitter: name,
+                transmitter: port,
                 map: (envelope) => {
                     switch (envelope.type) {
                         case MULTIPLY_ACTION_TYPE:
@@ -33,10 +33,10 @@ onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScop
         );
     }
 
-    if (createMessagePortName('SUM_WORKER') === name) {
+    if (name.includes('SUM_WORKER')) {
         return connectMessagePortToActor(
             {
-                transmitter: name,
+                transmitter: port,
                 map: (envelope) => {
                     switch (envelope.type) {
                         case SUM_RESULT_TYPE:

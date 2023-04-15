@@ -9,6 +9,7 @@ export function createActorMultiply() {
         ({ subscribe, dispatch }) => {
             const createResponse = createResponseFactory(dispatch);
             const unsubscribe = subscribe(async (envelope) => {
+                console.log('>> MULTIPLY', envelope);
                 if (envelope.type === MULTIPLY_ACTION_TYPE) {
                     const numbers = envelope.payload;
                     let result = numbers[0];

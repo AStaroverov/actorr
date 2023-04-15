@@ -1,4 +1,4 @@
-import { Envelope } from '../../../../src/types';
+import { Envelope } from '../../../../src';
 
 export type TMultiplyActionEnvelope = Envelope<typeof MULTIPLY_ACTION_TYPE, number[]>;
 export type TMultiplyResultEnvelope = Envelope<typeof MULTIPLY_RESULT_TYPE, number>;

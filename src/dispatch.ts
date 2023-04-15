@@ -1,17 +1,38 @@
 import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
-import { SystemEnvelope } from './types';
+import { AnyEnvelope } from './types';
+import { waitMessagePort } from './utils';
+
+const mapPortToReady = new WeakMap<MessagePort, true | Promise<unknown>>();
+export const createDispatchWithQueue = (port: MessagePort) => {
+    if (!mapPortToReady.has(port)) {
+        mapPortToReady.set(
+            port,
+            waitMessagePort(port).then(() => mapPortToReady.set(port, true)),
+        );
+    }
+
+    return function dispatchWithQueue(envelope: AnyEnvelope) {
+        const isReadyOrPromise = mapPortToReady.get(port);
+
+        if (isReadyOrPromise === undefined) {
+            throw new Error('Port was collected by GC');
+        } else if (isReadyOrPromise === true) {
+            port.postMessage(envelope, envelope.transferable as any);
+        } else {
+            isReadyOrPromise.then(() => {
+                port.postMessage(envelope, envelope.transferable as any);
+            });
+        }
+    };
+};
 
 export function createDispatch<T extends EnvelopeDispatchTarget>(target: T) {
-    if (target instanceof MessagePort) {
-        return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {
-            target.postMessage(envelope, envelope.transferable as any);
-        };
+    if (typeof target === 'object' && 'postMessage' in target) {
+        return createDispatchWithQueue(target);
     }
 
     if (typeof target === 'object' && 'dispatch' in target) {
-        return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {
-            target.dispatch(envelope);
-        };
+        return target.dispatch.bind(target);
     }
 
     throw new Error('Invalid dispatch target');

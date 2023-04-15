@@ -1,11 +1,12 @@
 import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { createRequest } from '../request';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason, ChannelOpenEnvelope } from './defs';
-import { createDispatchWithQueue, noop, readyMessagePort } from '../utils';
+import { noop } from '../utils';
 import { ChannelDispose, OpenChanelContext } from './types';
 import { createSubscribe } from '../subscribe';
 import { createEnvelope } from '../envelope';
 import { subscribeOnThreadTerminate } from '../locks';
+import { createDispatch } from '../dispatch';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
@@ -28,10 +29,8 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
 
             if (mapDisposes.has(port)) return;
 
-            port.start();
-
             const closeChannel = createCloseChannel(port);
-            const dispatchToChannel = createDispatchWithQueue(port);
+            const dispatchToChannel = createDispatch(port);
             const subscribeToChannel = createSubscribe<In>(port);
             const unsubscribeOnCloseChannel = subscribeToChannel(
                 (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.Manual),
@@ -54,7 +53,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 () => port.close(),
             ]);
 
-            readyMessagePort(port);
+            // checkAsReady(port);
         });
 
         return function closeOpenedChannels() {

@@ -3,6 +3,6 @@ import { createPingPongActor } from '../actors/pingpong/actor';
 
 const actor = createPingPongActor(1000).launch();
 
-onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (port) => {
+onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name, port) => {
     return connectMessagePortToActor(port, actor);
 });

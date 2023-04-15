@@ -2,7 +2,7 @@ import type { ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { EnvelopeTransmitter } from '../types';
 import type { ChannelDispose, SupportChanelContext } from './types';
 import { createResponseFactory } from '../response';
-import { createDispatchWithQueue, noop, readyMessagePort } from '../utils';
+import { noop } from '../utils';
 import { createEnvelope } from '../envelope';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason } from './defs';
 import { createDispatch } from '../dispatch';
@@ -21,13 +21,12 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
         const localPort = channel.port1;
         const remotePort = channel.port2;
 
-        localPort.start();
         createResponse<Out>(target)(createEnvelope(CHANNEL_OPEN_TYPE, remotePort, [remotePort]));
 
         const disposes: Array<Function | ChannelDispose> = [];
         const closeChannel = (reason: ValueOf<typeof ChannelCloseReason>) =>
             disposes.forEach((dispose) => dispose(reason));
-        const dispatchToChannel = createDispatchWithQueue(localPort);
+        const dispatchToChannel = createDispatch(localPort);
         const subscribeToChannel = createSubscribe<In>(localPort);
         const unsubscribeOnCloseChannel = subscribeToChannel(
             (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.Manual),
@@ -46,7 +45,7 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             () => (localPort.close(), remotePort.close()),
         );
 
-        readyMessagePort(localPort);
+        // checkAsReady(localPort);
 
         return () => closeChannel(ChannelCloseReason.Manual);
     };

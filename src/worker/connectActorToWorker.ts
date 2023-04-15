@@ -3,17 +3,16 @@ import { createEnvelope } from '../envelope';
 import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
 import { connectActorToMessagePort } from './connectActorToMessagePort';
 import { createMessagePortName, getEnvelopeTransmitter, getMapper } from '../utils';
-import { getWorkerMessagePort, waitWorker } from './utils';
+import { getWorkerMessagePort } from './utils';
+import { createDispatch } from '../dispatch';
 
-export async function connectActorToWorker<A extends Actor, W extends Worker | SharedWorker>(
+export function connectActorToWorker<A extends Actor, W extends Worker | SharedWorker>(
     _actor: A | EnvelopeTransmitterWithMapper<A>,
     _worker: W | EnvelopeTransmitterWithMapper<W>,
 ) {
     const actor = getEnvelopeTransmitter(_actor);
     const worker = getEnvelopeTransmitter(_worker);
     const mapper = getMapper(_worker);
-
-    await waitWorker(worker);
 
     const channel = new MessageChannel();
     const localPort = channel.port1;
@@ -23,13 +22,14 @@ export async function connectActorToWorker<A extends Actor, W extends Worker | S
 
     const workerPortName = createMessagePortName(actor.name);
     const workerMessagePort = getWorkerMessagePort(worker);
-    const disconnect = connectActorToMessagePort(_actor, { transmitter: localPort, map: mapper });
+    const disconnectTransmitters = connectActorToMessagePort(_actor, { transmitter: localPort, map: mapper });
+    const dispatchToWorker = createDispatch(workerMessagePort);
 
-    workerMessagePort.postMessage(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName), [workerPort]);
+    dispatchToWorker(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName, [workerPort]));
 
     return () => {
-        disconnect();
-        workerMessagePort.postMessage(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName));
+        disconnectTransmitters();
+        dispatchToWorker(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName));
         localPort.close();
         workerPort.close();
     };

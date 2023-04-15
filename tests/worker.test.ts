@@ -7,6 +7,7 @@ import {
     createEnvelope,
     createMessagePortName,
     onConnectMessagePort,
+    subscribe,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
@@ -23,8 +24,7 @@ describe(`Worker`, () => {
         });
         const onMessage = jest.fn();
 
-        channel.port2.addEventListener(`message`, onMessage);
-
+        subscribe(channel.port2, onMessage);
         connectActorToMessagePort(actor, channel.port1);
 
         actor.launch();
@@ -43,11 +43,15 @@ describe(`Worker`, () => {
         });
         const worker = new WorkerMock();
         const workerPortName = createMessagePortName(actor.name);
-        const disconnect = await connectActorToWorker(actor, worker as unknown as Worker);
+        const disconnect = connectActorToWorker(actor, worker as unknown as Worker);
+
+        await sleep(10);
 
         expect(worker.postMessage).toHaveBeenCalledTimes(2);
-        expect(worker.postMessage.mock.calls[1][0]).toEqual(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName));
-        expect(worker.postMessage.mock.calls[1][1]?.[0]).toBeInstanceOf(MessagePort);
+        expect(worker.postMessage.mock.calls[1]).toEqual([
+            createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName, [expect.any(MessagePort)] as any),
+            [expect.any(MessagePort)],
+        ]);
 
         disconnect();
 
@@ -94,7 +98,7 @@ describe(`Worker`, () => {
         const workerScope = new WorkerGlobalScopeMock();
         const portName = createMessagePortName('port');
         const onDisconnect = jest.fn();
-        const onConnect = jest.fn((port: MessagePort) => onDisconnect);
+        const onConnect = jest.fn((name: string, port: MessagePort) => onDisconnect);
 
         const channel = new MessageChannel();
 
@@ -108,7 +112,8 @@ describe(`Worker`, () => {
         await sleep(10);
 
         expect(onConnect).toHaveBeenCalledTimes(1);
-        expect(onConnect.mock.lastCall?.[0]).toBeInstanceOf(MessagePort);
+        expect(onConnect.mock.lastCall?.[0]).toBe(portName);
+        expect(onConnect.mock.lastCall?.[1]).toBeInstanceOf(MessagePort);
 
         workerScope.dispatch(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, portName));
 
