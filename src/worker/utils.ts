@@ -1,15 +1,9 @@
-export function getWorkerPostMessage(worker: Worker | SharedWorker) {
-    return worker instanceof SharedWorker ? worker.port.postMessage.bind(worker.port) : worker.postMessage.bind(worker);
+import { waitMessagePort } from '../utils';
+
+export function getWorkerMessagePort(worker: Worker | SharedWorker): MessagePort {
+    return (worker instanceof SharedWorker ? worker.port : worker) as MessagePort;
 }
 
-export function getWorkerAddEventListener(worker: Worker | SharedWorker) {
-    return worker instanceof SharedWorker
-        ? (worker.port.start(), worker.port.addEventListener.bind(worker.port))
-        : worker.addEventListener.bind(worker);
-}
-
-export function getWorkerRemoveEventListener(worker: Worker | SharedWorker) {
-    return worker instanceof SharedWorker
-        ? worker.port.removeEventListener.bind(worker.port)
-        : worker.removeEventListener.bind(worker);
+export function waitWorker(worker: Worker | SharedWorker) {
+    return waitMessagePort(getWorkerMessagePort(worker));
 }

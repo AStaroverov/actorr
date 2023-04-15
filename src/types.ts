@@ -1,6 +1,7 @@
 import { ChannelCloseEnvelope, ChannelOpenEnvelope } from './channel/defs';
 import { HeartbeatEnvelope } from './heartbeat/def';
-import { MessagePortName } from './worker/types';
+
+export type ValueOf<T> = T[keyof T];
 
 export type Mailbox<T extends AnyEnvelope = AnyEnvelope> = {
     destroy?: () => void;
@@ -13,6 +14,7 @@ export type Envelope<T extends string, P> = {
     payload: P;
     transferable: undefined | Transferable[];
 
+    threadId: string;
     routePassed: undefined | string;
     routeAnnounced: undefined | string;
 };
@@ -62,14 +64,12 @@ export type ExtractEnvelopeOut<T> = T extends EnvelopeTransmitter<any, infer Out
 export type EnvelopeDispatchTarget<T extends AnyEnvelope = AnyEnvelope> =
     | Pick<Mailbox<T>, 'dispatch'>
     | WithDispatch<T>
-    | MessagePort
-    | MessagePortName;
+    | MessagePort;
 
 export type EnvelopeSubscribeSource<T extends AnyEnvelope = AnyEnvelope> =
     | Pick<Mailbox<T>, 'subscribe'>
     | WithSubscribe<T>
-    | MessagePort
-    | MessagePortName;
+    | MessagePort;
 
 export type ExtractEnvelope<T> = T extends EnvelopeDispatchTarget<infer E>
     ? E

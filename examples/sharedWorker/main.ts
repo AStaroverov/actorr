@@ -10,8 +10,14 @@ const multiplyWorker = new SharedWorker(new URL('../common/workers/multiplyWorke
     name: 'multiplyWorker',
     type: 'module',
 });
+const pingWorker = new SharedWorker(new URL('../common/workers/pingWorker.ts', import.meta.url), {
+    name: 'pingWorker',
+    type: 'module',
+});
 
-await connectActorToWorker(actorMain, multiplyWorker);
+connectActorToWorker(actorMain, pingWorker);
+connectActorToWorker(actorMain, multiplyWorker);
+
 await connectWorkerToWorker(
     { name: 'SUM_WORKER', worker: sumWorker },
     { name: 'MULTIPLY_WORKER', worker: multiplyWorker },

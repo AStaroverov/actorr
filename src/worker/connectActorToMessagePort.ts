@@ -1,15 +1,14 @@
 import type { Actor, EnvelopeTransmitterWithMapper } from '../types';
-import type { MessagePortName } from './types';
 import { connectEnvelopeTransmitter } from '../connectEnvelopeTransmitter';
 
-export function connectActorToMessagePort<A extends Actor, P extends MessagePort | MessagePortName>(
+export function connectActorToMessagePort<A extends Actor, P extends MessagePort>(
     actor: A | EnvelopeTransmitterWithMapper<A>,
     port: P | EnvelopeTransmitterWithMapper<P>,
 ): Function {
     return connectEnvelopeTransmitter(actor, port);
 }
 
-export function connectMessagePortToActor<A extends Actor, P extends MessagePort | MessagePortName>(
+export function connectMessagePortToActor<A extends Actor, P extends MessagePort>(
     port: P | EnvelopeTransmitterWithMapper<P>,
     actor: A | EnvelopeTransmitterWithMapper<A>,
 ): Function {

@@ -1,30 +1,26 @@
-import type { ConnectEnvelope, DisconnectEnvelope, MessagePortName } from './types';
+import type { ConnectEnvelope, DisconnectEnvelope } from './types';
 import { isEnvelope } from '../envelope';
-import { setMessagePort, deleteMessagePort, onMessagePortFinalize } from './ports';
 import {
-    isSharedWorkerScope,
-    isDedicatedWorkerScope,
     CONNECT_MESSAGE_PORT_TYPE,
     DISCONNECT_MESSAGE_PORT_TYPE,
-    PING,
-    PONG,
+    isDedicatedWorkerScope,
+    isSharedWorkerScope,
 } from './defs';
-import { noop } from '../utils';
+import { checkPortAsReady, isPortReadyCheck, noop } from '../utils';
+import { currentThreadId, subscribeOnThreadTerminate } from '../locks';
 
 const dependencies = <const>{
     isDedicatedWorkerScope,
     isSharedWorkerScope,
-    setMessagePort,
-    deleteMessagePort,
 };
 
 export function onConnectMessagePort(
     context: DedicatedWorkerGlobalScope | SharedWorkerGlobalScope,
-    callback: (name: MessagePortName) => unknown | Function,
-    { isDedicatedWorkerScope, isSharedWorkerScope, setMessagePort, deleteMessagePort } = dependencies,
-): VoidFunction {
+    onConnect: (name: string, port: MessagePort) => void | Function,
+    { isDedicatedWorkerScope, isSharedWorkerScope } = dependencies,
+): Function {
     if (isDedicatedWorkerScope(context)) {
-        const listener = createListener(context);
+        const listener = createListener(context, onConnect);
         context.addEventListener('message', listener);
         return () => context.removeEventListener('message', listener);
     }
@@ -32,8 +28,7 @@ export function onConnectMessagePort(
     if (isSharedWorkerScope(context)) {
         const callback = (event: MessageEvent) => {
             const port = event.ports[0];
-            const listener = createListener(port);
-
+            const listener = createListener(port, onConnect);
             port.start();
             port.addEventListener('message', listener);
         };
@@ -43,34 +38,46 @@ export function onConnectMessagePort(
     }
 
     return noop;
+}
 
-    function createListener(port: MessagePort | DedicatedWorkerGlobalScope) {
-        return function listener(event: MessageEvent) {
-            if (event.data === PING) return port.postMessage(PONG);
+function createListener(
+    port: MessagePort | DedicatedWorkerGlobalScope,
+    callback: (name: string, port: MessagePort) => void | Function,
+) {
+    const mapPortNameToUnsubscribe = new Map<string, Function>();
 
-            if (!isEnvelope(event.data)) return;
+    // fast ready confirmation
+    checkPortAsReady(port);
 
-            if (event.data.type === CONNECT_MESSAGE_PORT_TYPE) {
-                const envelope = event.data as ConnectEnvelope;
-                const name = envelope.payload;
-                const port = event.ports[0];
+    return function listener(event: MessageEvent) {
+        if (isPortReadyCheck(event)) return checkPortAsReady(port);
 
-                port.start();
-                setMessagePort(name, port);
+        if (!isEnvelope(event.data)) return;
 
-                const onFinalize = callback(name);
+        if (event.data.type === CONNECT_MESSAGE_PORT_TYPE) {
+            const envelope = event.data as ConnectEnvelope;
+            const name = envelope.payload;
+            const port = event.ports[0];
+            const disposes: Array<Function> = [];
+            const disconnect = () => disposes.forEach((dispose) => dispose());
+            const callbackDispose = callback(name, port);
 
-                if (typeof onFinalize === 'function') {
-                    onMessagePortFinalize(name, onFinalize);
-                }
+            if (callbackDispose !== undefined) {
+                disposes.push(callbackDispose);
             }
 
-            if (event.data.type === DISCONNECT_MESSAGE_PORT_TYPE) {
-                const envelope = event.data as DisconnectEnvelope;
-                const name = envelope.payload;
-
-                deleteMessagePort(name);
+            if (currentThreadId !== envelope.threadId) {
+                disposes.push(subscribeOnThreadTerminate(envelope.threadId, disconnect));
             }
-        };
-    }
+
+            mapPortNameToUnsubscribe.set(name, disconnect);
+        }
+
+        if (event.data.type === DISCONNECT_MESSAGE_PORT_TYPE) {
+            const envelope = event.data as DisconnectEnvelope;
+            const name = envelope.payload;
+
+            mapPortNameToUnsubscribe.get(name)?.();
+        }
+    };
 }

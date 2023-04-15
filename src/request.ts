@@ -8,10 +8,10 @@ import type {
 import { shallowCopyEnvelope } from './envelope';
 import { createSubscribe } from './subscribe';
 import { createDispatch } from './dispatch';
-import { getShortRandomString } from './utils';
+import { createShortRandomString } from './utils';
 
 function createRequestName(type: string) {
-    return `Request(${type}[${getShortRandomString()}])`;
+    return `Request(${type}[${createShortRandomString()}])`;
 }
 
 export function createRequest<T extends EnvelopeTransmitter>(transmitter: T) {

@@ -3,9 +3,8 @@ import {
     connectActorToActor,
     createActorFactory,
     createEnvelope,
-    createResponseFactory,
     createRequest,
-    AnyEnvelope,
+    createResponseFactory,
     Envelope,
     UnknownEnvelope,
 } from '../src';

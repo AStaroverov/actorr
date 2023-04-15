@@ -1,17 +1,17 @@
 import { createActorSum } from '../actors/sum/actor';
 import { createActorMinMax } from '../actors/minmax/actor';
-import { onConnectMessagePort, connectMessagePortToActor } from '../../../src';
+import { connectMessagePortToActor, onConnectMessagePort } from '../../../src';
 import { SUM_RESULT_TYPE } from '../actors/sum/defs';
 
 const actorSum = createActorSum().launch();
 const actorMinMax = createActorMinMax().launch();
 
-onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name) => {
-    const dis1 = connectMessagePortToActor(name, {
+onConnectMessagePort(self as DedicatedWorkerGlobalScope | SharedWorkerGlobalScope, (name, port) => {
+    const dis1 = connectMessagePortToActor(port, {
         transmitter: actorSum,
         map: (envelope) => (envelope.type === SUM_RESULT_TYPE ? envelope : undefined),
     });
-    const dis2 = connectMessagePortToActor(name, actorMinMax);
+    const dis2 = connectMessagePortToActor(port, actorMinMax);
 
     // on disconnect
     return () => {

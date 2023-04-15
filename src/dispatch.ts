@@ -1,22 +1,41 @@
 import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
-import { getMessagePort } from './worker/ports';
-import { SystemEnvelope } from './types';
+import { AnyEnvelope } from './types';
+import { waitMessagePort } from './utils';
 
-export function createDispatch<T extends EnvelopeDispatchTarget>(target: T) {
-    return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {
-        if (typeof target === 'string') {
-            queueMicrotask(() => {
-                const port = getMessagePort(target);
-                if (port !== undefined) {
-                    port.postMessage(envelope, envelope.transferable as any);
-                }
+const mapPortToReady = new WeakMap<MessagePort, true | Promise<unknown>>();
+export const createDispatchWithQueue = (port: MessagePort) => {
+    if (!mapPortToReady.has(port)) {
+        mapPortToReady.set(
+            port,
+            waitMessagePort(port).then(() => mapPortToReady.set(port, true)),
+        );
+    }
+
+    return function dispatchWithQueue(envelope: AnyEnvelope) {
+        const isReadyOrPromise = mapPortToReady.get(port);
+
+        if (isReadyOrPromise === undefined) {
+            throw new Error('Port was collected by GC');
+        } else if (isReadyOrPromise === true) {
+            port.postMessage(envelope, envelope.transferable as any);
+        } else {
+            isReadyOrPromise.then(() => {
+                port.postMessage(envelope, envelope.transferable as any);
             });
-        } else if (typeof target === 'object' && 'postMessage' in target) {
-            target.postMessage(envelope, envelope.transferable as any);
-        } else if (typeof target === 'object' && 'dispatch' in target) {
-            target.dispatch(envelope);
         }
     };
+};
+
+export function createDispatch<T extends EnvelopeDispatchTarget>(target: T) {
+    if (typeof target === 'object' && 'postMessage' in target) {
+        return createDispatchWithQueue(target);
+    }
+
+    if (typeof target === 'object' && 'dispatch' in target) {
+        return target.dispatch.bind(target);
+    }
+
+    throw new Error('Invalid dispatch target');
 }
 
 export function dispatch<T extends EnvelopeDispatchTarget, E extends ExtractEnvelope<T>>(target: T, envelope: E) {
