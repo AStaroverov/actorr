@@ -1,8 +1,6 @@
 import { isEnvelope } from './envelope';
-import { noop } from './utils';
 import { AnyEnvelope, EnvelopeSubscribeSource, Subscribe, SubscribeCallback, SystemEnvelope } from './types';
 import { isSystemEnvelope } from './isSystemEnvelope';
-import { getMessagePort } from './worker/ports';
 
 function createWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
     return withSystemEnvelopes === true ? callback : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);
@@ -25,20 +23,13 @@ export function createSubscribe<T extends AnyEnvelope>(source: EnvelopeSubscribe
             return source.subscribe(wrapper, true);
         }
 
-        if (typeof source === 'string' || (typeof source === 'object' && 'postMessage' in source)) {
-            const messagePort = typeof source === 'string' ? getMessagePort(source) : source;
+        if (typeof source === 'object' && 'postMessage' in source) {
             const postMessageWrapper = createPostMessageWrapper(wrapper);
-
-            messagePort?.addEventListener('message', postMessageWrapper);
-
-            return () => {
-                // prevent stuck port inside closure
-                const messagePort = typeof source === 'string' ? getMessagePort(source) : source;
-                messagePort?.removeEventListener('message', postMessageWrapper);
-            };
+            source.addEventListener('message', postMessageWrapper);
+            return () => source.removeEventListener('message', postMessageWrapper);
         }
 
-        return noop;
+        throw new Error('Invalid subscribe source');
     };
 }
 

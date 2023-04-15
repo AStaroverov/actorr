@@ -6,82 +6,12 @@ import {
     createActorFactory,
     createEnvelope,
     createMessagePortName,
-    deleteMessagePort,
-    MessagePortName,
     onConnectMessagePort,
-    setMessagePort,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
 import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
-import { PING, PONG } from '../src/defs';
-
-const { MessageChannel, MessagePort } = require('worker_threads');
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-class WorkerMock {
-    channel = new MessageChannel();
-
-    constructor() {
-        this.channel.port2.addListener('message', (event: MessageEvent) => {
-            event.data === PING && this.channel.port2.postMessage({ data: PONG });
-        });
-    }
-
-    terminate() {
-        this.channel.port1.close();
-        this.channel.port2.close();
-    }
-
-    start() {}
-
-    postMessage = jest.fn((message: string | object, transferable?: Transferable[]) => {
-        this.channel.port1.postMessage({ data: message }, transferable);
-    });
-    addEventListener = jest.fn((type: string, listener: (event: MessageEvent) => void) => {
-        this.channel.port1.addListener(type, listener);
-    });
-    removeEventListener = jest.fn((type: string, listener: (event: MessageEvent) => void) => {
-        this.channel.port1.removeListener(type, listener);
-    });
-}
-
-class SharedWorkerMock {
-    port = new WorkerMock();
-    terminate() {
-        this.port.terminate();
-    }
-}
-
-class WorkerGlobalScopeMock {
-    channel = new MessageChannel();
-    dispatch = (data: string | object, ports?: MessagePort[]) => {
-        this.channel.port1.postMessage(
-            {
-                data,
-                ports,
-            },
-            ports,
-        );
-    };
-    postMessage = jest.fn((message: string | object, transferable?: Transferable[]) => {});
-    addEventListener = jest.fn((type: 'message', listener: Function) => {
-        this.channel.port2.addListener(type, listener);
-    });
-    removeEventListener = jest.fn((type: 'message', listener: Function) => {
-        this.channel.port2.removeListener(type, listener);
-    });
-
-    terminate() {
-        this.channel.port1.close();
-        this.channel.port2.close();
-    }
-}
-
-global.MessageChannel = MessageChannel;
-// @ts-ignore
-global.Worker = WorkerMock;
-// @ts-ignore
-global.SharedWorker = SharedWorkerMock;
+import { sleep } from './utils';
+import { SharedWorkerMock, WorkerGlobalScopeMock, WorkerMock } from './mocks';
 
 describe(`Worker`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
@@ -93,7 +23,7 @@ describe(`Worker`, () => {
         });
         const onMessage = jest.fn();
 
-        channel.port2.on(`message`, onMessage);
+        channel.port2.addEventListener(`message`, onMessage);
 
         connectActorToMessagePort(actor, channel.port1);
 
@@ -164,21 +94,13 @@ describe(`Worker`, () => {
         const workerScope = new WorkerGlobalScopeMock();
         const portName = createMessagePortName('port');
         const onDisconnect = jest.fn();
-        const onConnect = jest.fn((name: string) => onDisconnect);
+        const onConnect = jest.fn((port: MessagePort) => onDisconnect);
 
         const channel = new MessageChannel();
-        const setMessagePortMock = jest.fn((name: MessagePortName, port: MessagePort) => {
-            setMessagePort(name, port);
-        });
-        const deleteMessagePortMock = jest.fn((name: MessagePortName) => {
-            deleteMessagePort(name);
-        });
 
         onConnectMessagePort(workerScope as unknown as DedicatedWorkerGlobalScope, onConnect, {
             isDedicatedWorkerScope: (context): context is DedicatedWorkerGlobalScope => true,
             isSharedWorkerScope: (context): context is SharedWorkerGlobalScope => false,
-            setMessagePort: setMessagePortMock,
-            deleteMessagePort: deleteMessagePortMock,
         });
 
         workerScope.dispatch(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, portName), [channel.port1]);
@@ -186,22 +108,20 @@ describe(`Worker`, () => {
         await sleep(10);
 
         expect(onConnect).toHaveBeenCalledTimes(1);
-        expect(onConnect).toHaveBeenLastCalledWith(portName);
-        expect(setMessagePortMock).toHaveBeenCalledTimes(1);
-        expect(setMessagePortMock.mock.calls[0][0]).toEqual(portName);
-        expect(setMessagePortMock.mock.calls[0][1]).toBeInstanceOf(MessagePort);
+        expect(onConnect.mock.lastCall?.[0]).toBeInstanceOf(MessagePort);
 
         workerScope.dispatch(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, portName));
 
         await sleep(10);
 
         expect(onDisconnect).toHaveBeenCalledTimes(1);
-        expect(deleteMessagePortMock).toHaveBeenCalledTimes(1);
-        expect(deleteMessagePortMock).toHaveBeenLastCalledWith(portName);
 
         workerScope.channel.port1.close();
         workerScope.channel.port2.close();
 
         workerScope.terminate();
+
+        channel.port1.close();
+        channel.port2.close();
     });
 });

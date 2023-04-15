@@ -24,10 +24,3 @@ export { connectMessagePortToActor, connectActorToMessagePort } from './worker/c
 export { createMessagePortName } from './utils';
 export { createDispatch, dispatch } from './dispatch';
 export { createSubscribe, subscribe } from './subscribe';
-export {
-    getAllMessagePorts,
-    getMessagePort,
-    setMessagePort,
-    deleteMessagePort,
-    onMessagePortFinalize,
-} from './worker/ports';

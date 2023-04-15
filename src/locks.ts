@@ -8,7 +8,7 @@ const threadName = isSharedWorkerScope(globalThis)
     : isWindowScope(globalThis)
     ? 'window'
     : 'unknown';
-export const threadId = `${threadName}[${createShortRandomString()}]`;
+export const currentThreadId = `${threadName}[${createShortRandomString()}]`;
 
 export const subscribeOnThreadTerminate = (() => {
     if (globalThis.navigator === undefined || globalThis.navigator.locks === undefined)
@@ -21,7 +21,7 @@ export const subscribeOnThreadTerminate = (() => {
         };
 
     // lock the thread as alive
-    void navigator.locks.request(threadId, () => new Promise(() => {}));
+    void navigator.locks.request(currentThreadId, () => new Promise(() => {}));
 
     return function subscribeOnThreadTerminate(threadId: string, callback: Function) {
         const locksController = new AbortController();

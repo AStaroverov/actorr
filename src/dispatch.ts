@@ -1,19 +1,20 @@
 import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
 import { SystemEnvelope } from './types';
-import { getMessagePort } from './worker/ports';
 
 export function createDispatch<T extends EnvelopeDispatchTarget>(target: T) {
-    return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {
-        if (typeof target === 'string') {
-            queueMicrotask(() => {
-                getMessagePort(target)?.postMessage(envelope, envelope.transferable as any);
-            });
-        } else if (typeof target === 'object' && 'postMessage' in target) {
+    if (target instanceof MessagePort) {
+        return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {
             target.postMessage(envelope, envelope.transferable as any);
-        } else if (typeof target === 'object' && 'dispatch' in target) {
+        };
+    }
+
+    if (typeof target === 'object' && 'dispatch' in target) {
+        return function dispatch<E extends ExtractEnvelope<T>>(envelope: E | SystemEnvelope) {
             target.dispatch(envelope);
-        }
-    };
+        };
+    }
+
+    throw new Error('Invalid dispatch target');
 }
 
 export function dispatch<T extends EnvelopeDispatchTarget, E extends ExtractEnvelope<T>>(target: T, envelope: E) {

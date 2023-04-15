@@ -18,17 +18,20 @@ export async function connectActorToWorker<A extends Actor, W extends Worker | S
     const channel = new MessageChannel();
     const localPort = channel.port1;
     const workerPort = channel.port2;
+
+    localPort.start();
+
     const workerPortName = createMessagePortName(actor.name);
     const workerMessagePort = getWorkerMessagePort(worker);
     const disconnect = connectActorToMessagePort(_actor, { transmitter: localPort, map: mapper });
 
-    localPort.start();
     workerMessagePort.postMessage(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, workerPortName), [workerPort]);
 
     return () => {
         disconnect();
         workerMessagePort.postMessage(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, workerPortName));
         localPort.close();
+        workerPort.close();
     };
 }
 
