@@ -7,8 +7,7 @@ import {
     isDedicatedWorkerScope,
     isSharedWorkerScope,
 } from './defs';
-import { noop } from '../utils';
-import { PING, PONG } from '../defs';
+import { isCheckReady, noop, readyMessagePort } from '../utils';
 
 const dependencies = <const>{
     isDedicatedWorkerScope,
@@ -44,8 +43,11 @@ export function onConnectMessagePort(
     return noop;
 
     function createListener(port: MessagePort | DedicatedWorkerGlobalScope) {
+        // fast ready confirmation
+        readyMessagePort(port);
+
         return function listener(event: MessageEvent) {
-            if (event.data === PING) return port.postMessage(PONG);
+            if (isCheckReady(event)) return readyMessagePort(port);
 
             if (!isEnvelope(event.data)) return;
 

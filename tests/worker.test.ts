@@ -12,7 +12,8 @@ import {
     setMessagePort,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
-import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE, PING, PONG } from '../src/worker/defs';
+import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
+import { PING, PONG } from '../src/defs';
 
 const { MessageChannel, MessagePort } = require('worker_threads');
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

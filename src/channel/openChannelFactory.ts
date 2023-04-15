@@ -1,12 +1,10 @@
 import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { createRequest } from '../request';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason, ChannelOpenEnvelope } from './defs';
-import { noop } from '../utils';
-import { OpenChanelContext } from './types';
-import { createDispatch } from '../dispatch';
+import { createDispatchWithQueue, noop, readyMessagePort } from '../utils';
+import { ChannelDispose, OpenChanelContext } from './types';
 import { createSubscribe } from '../subscribe';
 import { createEnvelope } from '../envelope';
-import { PONG } from '../defs';
 import { subscribeOnThreadTerminate } from '../locks';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
@@ -14,48 +12,49 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
 
     return function openChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         envelope: ExtractEnvelopeOut<T>,
-        onOpen: (context: OpenChanelContext<In, Out>) => void | ((reason: ValueOf<typeof ChannelCloseReason>) => void),
+        onOpen: (context: OpenChanelContext<In, Out>) => void | ChannelDispose,
     ) {
-        const mapDisposes = new Map<string, Function[]>();
+        const mapDisposes = new Map<MessagePort, Function[]>();
 
-        const createCloseChannel = (routeName: string) => (reason: ValueOf<typeof ChannelCloseReason>) => {
-            mapDisposes.has(routeName) && mapDisposes.get(routeName)!.forEach((dispose) => dispose(reason));
-            mapDisposes.delete(routeName);
+        const createCloseChannel = (port: MessagePort) => (reason: ValueOf<typeof ChannelCloseReason>) => {
+            mapDisposes.get(port)?.forEach((dispose) => dispose(reason));
+            mapDisposes.delete(port);
         };
 
         const closeRequestResponse = request(envelope, (envelope) => {
-            const channelRoute = envelope.routePassed;
+            if (envelope.type !== CHANNEL_OPEN_TYPE) return;
 
-            if (channelRoute === undefined) {
-                return;
-            }
+            const port = (envelope as ChannelOpenEnvelope).payload;
 
-            if (envelope.type === CHANNEL_OPEN_TYPE && !mapDisposes.has(channelRoute)) {
-                const port = (envelope as ChannelOpenEnvelope).payload;
+            if (mapDisposes.has(port)) return;
 
-                port.start();
-                port.postMessage(PONG);
+            port.start();
 
-                const close = createCloseChannel(channelRoute);
-                const dispatch = createDispatch(port);
-                const subscribe = createSubscribe<In>(port);
-                const unsubscribeOnCloseChannel = subscribe(
-                    (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && close(ChannelCloseReason.Manual),
-                    true,
-                );
-                const unsubscribeOnThreadTerminate = subscribeOnThreadTerminate(envelope.threadId, () =>
-                    close(ChannelCloseReason.LoseChannel),
-                );
-                const dispose = onOpen({ dispatch, subscribe, close: () => close(ChannelCloseReason.Manual) });
+            const closeChannel = createCloseChannel(port);
+            const dispatchToChannel = createDispatchWithQueue(port);
+            const subscribeToChannel = createSubscribe<In>(port);
+            const unsubscribeOnCloseChannel = subscribeToChannel(
+                (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.Manual),
+                true,
+            );
+            const unsubscribeOnThreadTerminate = subscribeOnThreadTerminate(envelope.threadId, () =>
+                closeChannel(ChannelCloseReason.LoseChannel),
+            );
+            const dispose = onOpen({
+                dispatch: dispatchToChannel,
+                subscribe: subscribeToChannel,
+                close: () => closeChannel(ChannelCloseReason.Manual),
+            });
 
-                mapDisposes.set(channelRoute, [
-                    unsubscribeOnCloseChannel,
-                    unsubscribeOnThreadTerminate,
-                    dispose ?? noop,
-                    () => dispatch(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
-                    () => port.close(),
-                ]);
-            }
+            mapDisposes.set(port, [
+                unsubscribeOnCloseChannel,
+                unsubscribeOnThreadTerminate,
+                dispose ?? noop,
+                () => dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
+                () => port.close(),
+            ]);
+
+            readyMessagePort(port);
         });
 
         return function closeOpenedChannels() {

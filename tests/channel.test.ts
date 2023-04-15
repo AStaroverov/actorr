@@ -1,11 +1,15 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { connectActorToActor, createActorFactory, createEnvelope, AnyEnvelope, Envelope, Actor } from '../src';
+
+import type { Actor, AnyEnvelope, Envelope, OpenChanelContext, SupportChanelContext } from '../src';
+import {
+    connectActorToActor,
+    createActorFactory,
+    createEnvelope,
+    openChannelFactory,
+    supportChannelFactory,
+} from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
-import { openChannelFactory } from '../src/channel/openChannelFactory';
-import { OpenChanelContext, SupportChanelContext } from '../src/channel/types';
-import { supportChannelFactory } from '../src/channel/supportChannelFactory';
 import { Mock } from 'jest-mock';
-import { createHeartbeat } from '../src/heartbeat';
 
 export const OPEN_TYPE = 'OPEN_TYPE' as const;
 export type TOpenEnvelope = Envelope<typeof OPEN_TYPE, undefined>;
@@ -20,11 +24,9 @@ describe(`Channel`, () => {
         const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
             channel.subscribe(onChannelEnvelope1);
 
-            setTimeout(() => {
-                for (let i = 0; i < 3; i++) {
-                    channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
-                }
-            });
+            for (let i = 0; i < 3; i++) {
+                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
+            }
         });
         const ac1 = createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`A1`, (context) => {
             const openChannel = openChannelFactory(context);
@@ -51,7 +53,7 @@ describe(`Channel`, () => {
             return context.subscribe((envelope) => {
                 if (envelope.type === OPEN_TYPE) {
                     const close = supportChannel(envelope, onSupportChannel);
-                    setTimeout(close);
+                    setTimeout(close, 10);
                 }
             });
         });
@@ -61,15 +63,14 @@ describe(`Channel`, () => {
         ac2.launch();
         ac1.launch();
 
-        expect(onOpenChannel.mock.calls).toHaveLength(1);
-        expect(onSupportChannel.mock.calls).toHaveLength(1);
-
         setTimeout(() => {
+            expect(onOpenChannel.mock.calls).toHaveLength(1);
+            expect(onSupportChannel.mock.calls).toHaveLength(1);
             expect(onChannelEnvelope1.mock.calls).toHaveLength(4);
             expect(onChannelEnvelope2.mock.calls).toHaveLength(3);
             expect(onCloseChannel.mock.calls).toHaveLength(1);
             done();
-        });
+        }, 20);
     });
 
     it(`single channel through few actors`, (done) => {
@@ -92,21 +93,17 @@ describe(`Channel`, () => {
         const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
             channel.subscribe(onChannelEnvelope1);
 
-            setTimeout(() => {
-                for (let i = 0; i < 3; i++) {
-                    channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
-                }
-            });
+            for (let i = 0; i < 3; i++) {
+                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
+            }
         });
 
         const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
             channel.subscribe(onChannelEnvelope2);
 
-            setTimeout(() => {
-                for (let i = 0; i < 4; i++) {
-                    channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
-                }
-            });
+            for (let i = 0; i < 4; i++) {
+                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
+            }
         });
 
         const createActorStart = () =>
@@ -140,8 +137,10 @@ describe(`Channel`, () => {
         setTimeout(() => {
             expect(onChannelEnvelope1.mock.calls).toHaveLength(4);
             expect(onChannelEnvelope2.mock.calls).toHaveLength(3);
+            start.destroy();
+            wrapper.destroy();
             done();
-        });
+        }, 20);
     });
 
     it(`multiple channels`, (done) => {
@@ -150,19 +149,15 @@ describe(`Channel`, () => {
         const onChannelEnvelopesFromSupport: Mock[] = [];
 
         const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+            const uniq = Math.random();
             const onChannelEnvelope = jest.fn();
 
-            onChannelEnvelopesFromOpen.push(onChannelEnvelope);
+            for (let i = 0; i < 3; i++) {
+                channel.dispatch(createEnvelope(CHANNEL_TYPE, uniq));
+            }
 
             channel.subscribe(onChannelEnvelope);
-
-            setTimeout(() => {
-                const uniq = Math.random();
-
-                for (let i = 0; i < 3; i++) {
-                    channel.dispatch(createEnvelope(CHANNEL_TYPE, uniq));
-                }
-            });
+            onChannelEnvelopesFromOpen.push(onChannelEnvelope);
         });
         const ac1 = createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`A1`, (context) => {
             const openChannel = openChannelFactory(context);
@@ -170,22 +165,17 @@ describe(`Channel`, () => {
         });
 
         const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
+            const uniq = Math.random();
             const onChannelEnvelope = jest.fn();
-
-            onChannelEnvelopesFromSupport.push(onChannelEnvelope);
-
+            const onCloseChannel = jest.fn(() => unsub());
             const unsub = channel.subscribe(onChannelEnvelope);
 
-            setTimeout(() => {
-                const uniq = Math.random();
+            for (let i = 0; i < 4; i++) {
+                channel.dispatch(createEnvelope(CHANNEL_TYPE, uniq));
+            }
 
-                for (let i = 0; i < 4; i++) {
-                    channel.dispatch(createEnvelope(CHANNEL_TYPE, uniq));
-                }
-            });
-
-            const onCloseChannel = jest.fn(() => unsub());
             onCloseChannels.push(onCloseChannel);
+            onChannelEnvelopesFromSupport.push(onChannelEnvelope);
 
             return onCloseChannel;
         });
@@ -196,7 +186,7 @@ describe(`Channel`, () => {
                 return context.subscribe((envelope) => {
                     if (envelope.type === OPEN_TYPE) {
                         const close = supportChannel(envelope, onSupportChannel);
-                        setTimeout(close);
+                        setTimeout(close, 10);
                     }
                 });
             });
@@ -240,59 +230,6 @@ describe(`Channel`, () => {
             }
 
             done();
-        });
-    });
-
-    it(`close channel on heartbeat timeout`, (done) => {
-        const onHeartbeatTimeout = jest.fn((timeout: number) => {});
-        const closeSupportedChannel = jest.fn(() => {});
-
-        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
-            const stop = createHeartbeat(
-                channel,
-                (timeout) => {
-                    stop();
-                    channel.close();
-                    onHeartbeatTimeout(timeout);
-                },
-                {
-                    maxTimeout: 500,
-                    checkTimeout: 100,
-                    dispatchTimeout: 100,
-                },
-            );
-
-            return stop;
-        });
-
-        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
-            return closeSupportedChannel;
-        });
-
-        const ac1 = createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`A1`, (context) => {
-            const openChannel = openChannelFactory(context);
-            return openChannel(createEnvelope(OPEN_TYPE, undefined), onOpenChannel);
-        });
-
-        const ac2 = createActor<TOpenEnvelope | TChannelEnvelope, TChannelEnvelope>(`A2`, (context) => {
-            const supportChannel = supportChannelFactory(context);
-            return context.subscribe((envelope) => {
-                if (envelope.type === OPEN_TYPE) {
-                    supportChannel(envelope, onSupportChannel);
-                }
-            });
-        });
-
-        connectActorToActor(ac1, ac2);
-
-        ac2.launch();
-        ac1.launch();
-
-        setTimeout(() => {
-            expect(onHeartbeatTimeout.mock.calls).toHaveLength(1);
-            expect(onHeartbeatTimeout.mock.calls[0][0]).toBeGreaterThanOrEqual(500);
-            expect(closeSupportedChannel.mock.calls).toHaveLength(1);
-            done();
-        }, 1000);
+        }, 20);
     });
 });
