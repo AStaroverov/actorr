@@ -11,18 +11,20 @@ export const createDispatchWithQueue = (port: MessagePort) => {
         );
     }
 
+    const postMessage = (envelope: AnyEnvelope) => {
+        try {
+            port.postMessage(envelope, envelope.transferable as any);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     return function dispatchWithQueue(envelope: AnyEnvelope) {
         const isReadyOrPromise = mapPortToReady.get(port);
 
-        if (isReadyOrPromise === undefined) {
-            throw new Error('Port was collected by GC');
-        } else if (isReadyOrPromise === true) {
-            port.postMessage(envelope, envelope.transferable as any);
-        } else {
-            isReadyOrPromise.then(() => {
-                port.postMessage(envelope, envelope.transferable as any);
-            });
-        }
+        if (isReadyOrPromise === undefined) throw new Error('Port was collected by GC');
+        if (isReadyOrPromise === true) return postMessage(envelope);
+        isReadyOrPromise.then(() => postMessage(envelope));
     };
 };
 
