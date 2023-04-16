@@ -16,11 +16,12 @@ export { createHeartbeat } from './heartbeat';
 
 export * from './worker/types';
 export { onConnectMessagePort } from './worker/onConnectMessagePort';
-export { connectWorkerToWorker } from './worker/connectWorkerToWorker';
 export { connectActorToWorker, connectWorkerToActor } from './worker/connectActorToWorker';
 export { connectMessagePortToActor, connectActorToMessagePort } from './worker/connectActorToMessagePort';
 
-// Advanced public methods
 export { createMessagePortName } from './utils';
 export { createDispatch, dispatch } from './dispatch';
 export { createSubscribe, subscribe } from './subscribe';
+
+// broken
+// export { connectWorkerToWorker } from './worker/connectWorkerToWorker';

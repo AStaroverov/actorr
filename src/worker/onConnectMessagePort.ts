@@ -6,7 +6,7 @@ import {
     isDedicatedWorkerScope,
     isSharedWorkerScope,
 } from './defs';
-import { checkPortAsReady, isPortReadyCheck, noop, setPortName } from '../utils';
+import { checkPortAsReadyOnMessage, noop, setPortName } from '../utils';
 import { currentThreadId, subscribeOnThreadTerminate } from '../locks';
 
 const dependencies = <const>{
@@ -46,11 +46,8 @@ function createListener(
 ) {
     const mapPortNameToUnsubscribe = new Map<string, Function>();
 
-    // fast ready confirmation
-    checkPortAsReady(port);
-
     return function listener(event: MessageEvent) {
-        if (isPortReadyCheck(event)) return checkPortAsReady(port);
+        checkPortAsReadyOnMessage(event);
 
         if (!isEnvelope(event.data)) return;
 

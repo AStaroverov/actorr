@@ -8,8 +8,8 @@ export function createShortRandomString() {
     return Math.round(Math.random() * Date.now()).toString(32);
 }
 
-export function createMessagePortName(base: string = createShortRandomString()) {
-    return `MessagePort(${base})`;
+export function createMessagePortName(base: string = 'Unknown') {
+    return `MessagePort(${base})[${createShortRandomString()}]`;
 }
 
 export function getEnvelopeTransmitter<T>(transmitter: T | EnvelopeTransmitterWithMapper<T>): T {
@@ -25,7 +25,13 @@ export function getTransmitterMapper<T>(transmitter: T | EnvelopeTransmitterWith
 const mapPortToName = new WeakMap<MessagePort, string>();
 
 export function setPortName(port: MessagePort, name: string) {
-    mapPortToName.set(port, name);
+    const currentName = mapPortToName.get(port);
+
+    if (currentName === undefined) {
+        mapPortToName.set(port, name);
+    } else {
+        console.warn(`Port name already set to "${currentName}", can't set to "${name}"`);
+    }
 }
 
 export function getPortName(port: MessagePort) {
@@ -75,4 +81,8 @@ export function isPortReadyCheck(event: MessageEvent) {
 
 export function checkPortAsReady(port: MessagePort | DedicatedWorkerGlobalScope) {
     port.postMessage(PONG);
+}
+
+export function checkPortAsReadyOnMessage(event: MessageEvent) {
+    if (isPortReadyCheck(event)) checkPortAsReady(event.target as MessagePort);
 }

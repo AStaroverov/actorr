@@ -92,14 +92,15 @@ function createHeartbeat(context: WithDispatch & WithSubscribe, panic: (timeout:
 ```typescript
 function connectActorToWorker(actor: Actor, worker: Worker | SharedWorker): Promise<() => void>;
 ```
+<!--
 ### connectWorkerToWorker
 ```typescript
 function connectWorkerToWorker(
     worker1: { name: string; worker: Worker | SharedWorker; },
     worker2: { name: string; worker: Worker | SharedWorker; }
 ): Promise<() => void>;
-
 ```
+-->
 ### connectActorToMessagePort
 ```typescript
 function connectActorToMessagePort(actor: Actor, port: MessagePort | MessagePortName): Function;

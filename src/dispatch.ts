@@ -22,7 +22,7 @@ export const createDispatchWithQueue = (port: MessagePort) => {
     return function dispatchWithQueue(envelope: AnyEnvelope) {
         const isReadyOrPromise = mapPortToReady.get(port);
 
-        if (isReadyOrPromise === undefined) throw new Error('Port was collected by GC');
+        if (isReadyOrPromise === undefined) throw new Error('Impossible state');
         if (isReadyOrPromise === true) return postMessage(envelope);
         isReadyOrPromise.then(() => postMessage(envelope));
     };
