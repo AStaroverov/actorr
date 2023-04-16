@@ -1,6 +1,6 @@
 import { lockThread } from './locks';
 
-// We must lock thread at root level to prevent it from silent termination
+// We must lock thread at root level to prevent thread silent termination
 lockThread();
 
 export * from './types';

@@ -1,5 +1,6 @@
-import { connectActorToWorker, connectWorkerToWorker } from '../../src';
+import { connectActorToWorker } from '../../src';
 import { createActorMain } from './actor';
+import { connectWorkerToWorker } from '../../src/worker/connectWorkerToWorker';
 
 const actorMain = createActorMain();
 const sumWorker = new SharedWorker(new URL('../common/workers/sumWorker.ts', import.meta.url), {

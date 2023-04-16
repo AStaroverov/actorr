@@ -16,10 +16,12 @@ const threadName = isSharedWorkerScope(globalThis)
     : 'unknown';
 export const currentThreadId = `${threadName}[${createShortRandomString()}]`;
 
-export const lockThread = webLocksSupported ? () => navigator.locks.request.bind(navigator.locks) : noop;
+export const lockThread = webLocksSupported
+    ? () => navigator.locks.request(currentThreadId, () => new Promise(noop))
+    : noop;
 
 export const subscribeOnThreadTerminate = webLocksSupported
-    ? function subscribeOnThreadTerminate(threadId: string, callback: Function) {
+    ? function subscribeOnThreadTerminate(threadId: string, callback: () => void) {
           const locksController = new AbortController();
           void navigator.locks
               .request(threadId, { signal: locksController.signal }, callback as () => void)
