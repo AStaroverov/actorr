@@ -23,10 +23,18 @@ export const lockThread = webLocksSupported
 export const subscribeOnThreadTerminate = webLocksSupported
     ? function subscribeOnThreadTerminate(threadId: string, callback: () => void) {
           const locksController = new AbortController();
-          void navigator.locks
-              .request(threadId, { signal: locksController.signal }, callback as () => void)
-              .catch(noop);
-          return () => locksController.abort();
+          // if we call navigator.locks.request from 2 threads at same time, it will have unknown order
+          // I hope, that setTimeout will help to avoid this and 50ms is enough
+          const delayId = setTimeout(() => {
+              void navigator.locks
+                  .request(threadId, { signal: locksController.signal }, callback as () => void)
+                  .catch(noop);
+          }, 50);
+
+          return () => {
+              clearTimeout(delayId);
+              locksController.abort();
+          };
       }
     : function subscribeOnThreadTerminate() {
           return noop;
