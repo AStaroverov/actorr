@@ -8,6 +8,7 @@ import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason } from './def
 import { createDispatch } from '../dispatch';
 import { createSubscribe } from '../subscribe';
 import { subscribeOnThreadTerminate } from '../locks';
+import { timeoutProvider } from '../providers';
 
 export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const createResponse = createResponseFactory(createDispatch(transmitter));
@@ -43,7 +44,7 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             unsubscribeOnCloseChannel,
             dispose ?? noop,
             () => dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
-            () => setTimeout(() => localPort.close()),
+            () => timeoutProvider.setTimeout(() => localPort.close()),
         );
 
         return () => closeChannel(ChannelCloseReason.Manual);

@@ -1,6 +1,7 @@
 import { AnyEnvelope, WithDispatch, WithSubscribe } from '../types';
 import { HEARTBEAT_ENVELOPE } from './def';
 import { createEnvelope } from '../envelope';
+import { intervalProvider } from '../providers';
 
 export type HeartbeatOptions = {
     maxTimeout?: number;
@@ -18,16 +19,16 @@ export function createHeartbeat<Out extends AnyEnvelope, In extends AnyEnvelope>
     const dispatchTimeout = options?.dispatchTimeout ?? 1000;
     let currentTimeout: number = 0;
 
-    const dispatchIntervalId = setInterval(() => context.dispatch(envelope), dispatchTimeout);
-    const checkIntervalId = setInterval(() => {
+    const dispatchIntervalId = intervalProvider.setInterval(() => context.dispatch(envelope), dispatchTimeout);
+    const checkIntervalId = intervalProvider.setInterval(() => {
         currentTimeout = currentTimeout + checkTimeout;
         currentTimeout >= maxTimeout && panic(currentTimeout);
     }, checkTimeout);
     const unsubscribe = context.subscribe(() => (currentTimeout = 0), true);
 
     return () => {
-        clearInterval(dispatchIntervalId);
-        clearInterval(checkIntervalId);
+        intervalProvider.clearInterval(dispatchIntervalId);
+        intervalProvider.clearInterval(checkIntervalId);
         unsubscribe();
     };
 }

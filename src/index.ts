@@ -3,6 +3,8 @@ import { lockThread } from './locks';
 // We must lock thread at root level to prevent thread silent termination
 lockThread();
 
+export * from './providers';
+
 export * from './types';
 export { createEnvelope, isEnvelope } from './envelope';
 export { createActorFactory } from './createActorFactory';

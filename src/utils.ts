@@ -1,5 +1,6 @@
 import { EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
 import { PING, PONG } from './defs';
+import { intervalProvider } from './providers';
 
 export const identity = <T = any>(v: T) => v;
 export const noop = (): any => {};
@@ -50,9 +51,9 @@ export function waitMessagePort(port: MessagePort, signal?: AbortSignal) {
     const sendPing = () => port.postMessage(PING);
 
     return new Promise((resolve, reject) => {
-        const intervalId = setInterval(sendPing, 25);
+        const intervalId = intervalProvider.setInterval(sendPing, 25);
         const clear = () => {
-            clearInterval(intervalId);
+            intervalProvider.clearInterval(intervalId);
             port.removeEventListener('message', portListener);
             signal?.removeEventListener('abort', abortListener);
         };
