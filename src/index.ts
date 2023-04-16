@@ -1,3 +1,8 @@
+import { lockThread } from './locks';
+
+// We must lock thread at root level to prevent it from silent termination
+lockThread();
+
 export * from './types';
 export { createEnvelope, isEnvelope } from './envelope';
 export { createActorFactory } from './createActorFactory';
@@ -23,5 +28,5 @@ export { createMessagePortName } from './utils';
 export { createDispatch, dispatch } from './dispatch';
 export { createSubscribe, subscribe } from './subscribe';
 
-// broken
+// we need more tests to export this
 // export { connectWorkerToWorker } from './worker/connectWorkerToWorker';
