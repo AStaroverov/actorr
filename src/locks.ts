@@ -1,5 +1,6 @@
 import { createShortRandomString, noop } from './utils';
 import { isDedicatedWorkerScope, isSharedWorkerScope, isWindowScope } from './worker/defs';
+import { timeoutProvider } from './providers';
 
 const webLocksSupported = globalThis.navigator !== undefined && globalThis.navigator.locks !== undefined;
 
@@ -25,14 +26,14 @@ export const subscribeOnThreadTerminate = webLocksSupported
           const locksController = new AbortController();
           // if we call navigator.locks.request from 2 threads at same time, it will have unknown order
           // I hope, that setTimeout will help to avoid this and 50ms is enough
-          const delayId = setTimeout(() => {
+          const delayId = timeoutProvider.setTimeout(() => {
               void navigator.locks
                   .request(threadId, { signal: locksController.signal }, callback as () => void)
                   .catch(noop);
           }, 50);
 
           return () => {
-              clearTimeout(delayId);
+              timeoutProvider.clearTimeout(delayId);
               locksController.abort();
           };
       }

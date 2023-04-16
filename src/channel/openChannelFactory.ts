@@ -7,6 +7,7 @@ import { createSubscribe } from '../subscribe';
 import { createEnvelope } from '../envelope';
 import { subscribeOnThreadTerminate } from '../locks';
 import { createDispatch } from '../dispatch';
+import { timeoutProvider } from '../providers';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
@@ -52,7 +53,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 unsubscribeOnThreadTerminate,
                 dispose ?? noop,
                 () => dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
-                () => setTimeout(() => port.close()),
+                () => timeoutProvider.setTimeout(() => port.close()),
             ]);
         });
 
