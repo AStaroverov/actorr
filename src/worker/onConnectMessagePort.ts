@@ -1,5 +1,3 @@
-import type { ConnectEnvelope, DisconnectEnvelope } from './types';
-import { isEnvelope } from '../envelope';
 import {
     CONNECT_MESSAGE_PORT_TYPE,
     DISCONNECT_MESSAGE_PORT_TYPE,
@@ -8,6 +6,8 @@ import {
 } from './defs';
 import { checkPortAsReadyOnMessage, noop, setPortName } from '../utils';
 import { currentThreadId, subscribeOnThreadTerminate } from '../locks';
+import { isEnvelope } from '../envelope';
+import { ConnectEnvelope, DisconnectEnvelope } from './types';
 
 const dependencies = <const>{
     isDedicatedWorkerScope,
@@ -20,7 +20,7 @@ export function onConnectMessagePort(
     { isDedicatedWorkerScope, isSharedWorkerScope } = dependencies,
 ): Function {
     if (isDedicatedWorkerScope(context)) {
-        const listener = createListener(context, onConnect);
+        const listener = createListener(context as unknown as MessagePort, onConnect);
         context.addEventListener('message', listener);
         return () => context.removeEventListener('message', listener);
     }
@@ -40,10 +40,8 @@ export function onConnectMessagePort(
     return noop;
 }
 
-function createListener(
-    port: MessagePort | DedicatedWorkerGlobalScope,
-    callback: (name: string, port: MessagePort) => void | Function,
-) {
+function createListener(port: MessagePort, callback: (name: string, port: MessagePort) => void | Function) {
+    const mapPortNameCount = new Map<string, number>();
     const mapPortNameToUnsubscribe = new Map<string, Function>();
 
     return function listener(event: MessageEvent) {
@@ -54,30 +52,43 @@ function createListener(
         if (event.data.type === CONNECT_MESSAGE_PORT_TYPE) {
             const envelope = event.data as ConnectEnvelope;
             const name = envelope.payload;
-            const port = event.ports[0];
 
-            setPortName(port, name);
+            mapPortNameCount.set(name, (mapPortNameCount.get(name) ?? 0) + 1);
 
-            const disposes: Array<Function> = [];
-            const disconnect = () => disposes.forEach((dispose) => dispose());
-            const callbackDispose = callback(name, port);
+            if (!mapPortNameToUnsubscribe.has(name)) {
+                setPortName(port, name);
 
-            if (callbackDispose !== undefined) {
-                disposes.push(callbackDispose);
+                const disposes: Array<Function> = [
+                    () => {
+                        mapPortNameCount.delete(name);
+                        mapPortNameToUnsubscribe.delete(name);
+                    },
+                ];
+                const disconnect = () => disposes.forEach((dispose) => dispose());
+                const callbackDispose = callback(name, port);
+
+                if (callbackDispose !== undefined) {
+                    disposes.push(callbackDispose);
+                }
+
+                if (currentThreadId !== envelope.threadId) {
+                    disposes.push(subscribeOnThreadTerminate(envelope.threadId, disconnect));
+                }
+
+                mapPortNameToUnsubscribe.set(name, disconnect);
             }
-
-            if (currentThreadId !== envelope.threadId) {
-                disposes.push(subscribeOnThreadTerminate(envelope.threadId, disconnect));
-            }
-
-            mapPortNameToUnsubscribe.set(name, disconnect);
         }
 
         if (event.data.type === DISCONNECT_MESSAGE_PORT_TYPE) {
             const envelope = event.data as DisconnectEnvelope;
             const name = envelope.payload;
+            const count = (mapPortNameCount.get(name) ?? 1) - 1;
 
-            mapPortNameToUnsubscribe.get(name)?.();
+            if (count > 0) {
+                mapPortNameCount.set(name, count);
+            } else {
+                mapPortNameToUnsubscribe.get(name)?.();
+            }
         }
     };
 }

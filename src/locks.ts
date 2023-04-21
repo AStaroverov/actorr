@@ -8,7 +8,7 @@ if (!webLocksSupported && process.env.NODE_ENV !== 'test') {
     console.warn('navigator.locks is not implemented, that means that WebActor cannot detect thread termination');
 }
 
-const threadName = isSharedWorkerScope(globalThis)
+export const threadName = isSharedWorkerScope(globalThis)
     ? `${self.name}(sharedWorker)`
     : isDedicatedWorkerScope(globalThis)
     ? `${self.name}(dedicatedWorker)`

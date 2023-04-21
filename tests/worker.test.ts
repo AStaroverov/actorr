@@ -9,9 +9,9 @@ import {
     subscribe,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
-import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
 import { sleep } from './utils';
 import { WorkerGlobalScopeMock, WorkerMock } from './mocks';
+import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
 
 describe(`Worker`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
