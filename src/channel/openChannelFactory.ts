@@ -1,36 +1,41 @@
 import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
-import { createRequest } from '../request';
-import { CHANNEL_CLOSE_TYPE, CHANNEL_OPEN_TYPE, ChannelCloseReason, ChannelOpenEnvelope } from './defs';
-import { createMessagePortName, noop, setPortName } from '../utils';
+import { createRequest, createRequestName } from '../request/request';
+import { CHANNEL_CLOSE_TYPE, CHANNEL_HANDSHAKE_TYPE, ChannelCloseReason, ChannelHandshakeEnvelope } from './defs';
+import { createMessagePortName, setPortName } from '../utils';
 import { ChannelDispose, OpenChanelContext } from './types';
 import { createSubscribe } from '../subscribe';
-import { createEnvelope } from '../envelope';
+import { createEnvelope, shallowCopyEnvelope } from '../envelope';
 import { subscribeOnThreadTerminate } from '../locks';
 import { createDispatch } from '../dispatch';
 import { timeoutProvider } from '../providers';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
+    const dispatch = createDispatch(transmitter);
 
     return function openChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         envelope: ExtractEnvelopeOut<T>,
         onOpen: (context: OpenChanelContext<In, Out>) => void | ChannelDispose,
     ) {
-        const mapDisposes = new Map<MessagePort, Function[]>();
+        const mapDispose = new Map<MessagePort, Function>();
+
+        const openEnvelope = shallowCopyEnvelope(envelope);
+        const closeEnvelope = createEnvelope(CHANNEL_CLOSE_TYPE, undefined);
+        closeEnvelope.routePassed = openEnvelope.routePassed = createRequestName(envelope.type);
 
         const createCloseChannel = (port: MessagePort) => (reason: ValueOf<typeof ChannelCloseReason>) => {
-            mapDisposes.get(port)?.forEach((dispose) => dispose(reason));
-            mapDisposes.delete(port);
+            mapDispose.get(port)?.(reason);
+            mapDispose.delete(port);
         };
 
-        const closeRequestResponse = request(envelope, (envelope) => {
-            if (envelope.type !== CHANNEL_OPEN_TYPE) return;
+        const closeRequestResponse = request(openEnvelope, (envelope) => {
+            if (envelope.type !== CHANNEL_HANDSHAKE_TYPE) return;
 
-            const port = (envelope as ChannelOpenEnvelope).payload;
+            const port = (envelope as ChannelHandshakeEnvelope).payload;
 
             setPortName(port, createMessagePortName(envelope.routePassed));
 
-            if (mapDisposes.has(port)) return;
+            if (mapDispose.has(port)) return;
 
             const closeChannel = createCloseChannel(port);
             const dispatchToChannel = createDispatch(port);
@@ -48,23 +53,26 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 close: () => closeChannel(ChannelCloseReason.Manual),
             });
 
-            mapDisposes.set(port, [
-                unsubscribeOnCloseChannel,
-                unsubscribeOnThreadTerminate,
-                dispose ?? noop,
-                () => dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined)),
-                () => timeoutProvider.setTimeout(() => port.close()),
-            ]);
+            mapDispose.set(port, (reason: ValueOf<typeof ChannelCloseReason>) => {
+                unsubscribeOnCloseChannel();
+                unsubscribeOnThreadTerminate();
+                dispose?.(reason);
+                dispatchToChannel(closeEnvelope);
+                timeoutProvider.setTimeout(() => port.close());
+            });
         });
 
         return function closeOpenedChannels() {
             closeRequestResponse();
 
-            for (const disposes of mapDisposes.values()) {
-                disposes.forEach((dispose) => dispose(ChannelCloseReason.Destroy));
+            for (const dispose of mapDispose.values()) {
+                dispose(ChannelCloseReason.Destroy);
             }
 
-            mapDisposes.clear();
+            mapDispose.clear();
+
+            // Necessary only for web workers case
+            dispatch(closeEnvelope);
         };
     };
 }

@@ -19,6 +19,38 @@ export type TChannelEnvelope = Envelope<typeof CHANNEL_TYPE, number>;
 describe(`Channel`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
 
+    // TODO: use web worker
+    it(`fast close`, (done) => {
+        const ac1 = createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`A1`, (context) => {
+            const openChannel = openChannelFactory(context);
+            return openChannel(createEnvelope(OPEN_TYPE, undefined), () => {});
+        });
+
+        const onCloseChannel = jest.fn();
+        const onSupportChannel = jest.fn(() => onCloseChannel);
+        const ac2 = createActor<TOpenEnvelope | TChannelEnvelope, TChannelEnvelope>(`A2`, (context) => {
+            const supportChannel = supportChannelFactory(context);
+
+            return context.subscribe((envelope) => {
+                if (envelope.type === OPEN_TYPE) {
+                    supportChannel(envelope, onSupportChannel);
+                }
+            });
+        });
+
+        connectActorToActor(ac1, ac2);
+
+        ac2.launch();
+        ac1.launch();
+        ac1.destroy();
+
+        setTimeout(() => {
+            expect(onSupportChannel.mock.calls).toHaveLength(1);
+            expect(onCloseChannel.mock.calls).toHaveLength(1);
+            done();
+        }, 20);
+    });
+
     it(`single channel`, (done) => {
         const onChannelEnvelope1 = jest.fn();
         const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
