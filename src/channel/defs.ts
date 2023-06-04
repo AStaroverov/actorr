@@ -1,13 +1,16 @@
 import { Envelope } from '../types';
 
+export type OpenChannelId = string;
+
+// don't use enum, when we use object we can use string for functions as argument, useful for external users
 export const ChannelCloseReason = <const>{
     Manual: 'Manual',
     Destroy: 'Destroy',
     LoseChannel: 'LoseChannel',
 };
 
-export const CHANNEL_OPEN_TYPE = '__CHANNEL_OPEN_TYPE__' as const;
-export type ChannelOpenEnvelope = Envelope<typeof CHANNEL_OPEN_TYPE, MessagePort>;
+export const CHANNEL_HANDSHAKE_TYPE = '__CHANNEL_HANDSHAKE_TYPE__' as const;
+export type ChannelHandshakeEnvelope = Envelope<typeof CHANNEL_HANDSHAKE_TYPE, MessagePort>;
 
 export const CHANNEL_CLOSE_TYPE = '__CHANNEL_CLOSE_TYPE__' as const;
-export type ChannelCloseEnvelope = Envelope<typeof CHANNEL_CLOSE_TYPE, void>;
+export type ChannelCloseEnvelope = Envelope<typeof CHANNEL_CLOSE_TYPE, OpenChannelId>;

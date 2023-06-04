@@ -1,4 +1,4 @@
-import { ChannelCloseEnvelope, ChannelOpenEnvelope } from './channel/defs';
+import { ChannelCloseEnvelope, ChannelHandshakeEnvelope } from './channel/defs';
 import { HeartbeatEnvelope } from './heartbeat/def';
 
 export type ValueOf<T> = T[keyof T];
@@ -21,7 +21,7 @@ export type Envelope<T extends string, P> = {
 
 export type AnyEnvelope = Envelope<any, any>;
 export type UnknownEnvelope = Envelope<string, unknown>;
-export type SystemEnvelope = ChannelOpenEnvelope | ChannelCloseEnvelope | HeartbeatEnvelope;
+export type SystemEnvelope = ChannelHandshakeEnvelope | ChannelCloseEnvelope | HeartbeatEnvelope;
 
 export type Dispatch<T extends AnyEnvelope> = (envelope: T | SystemEnvelope) => unknown;
 export type Subscribe<T extends AnyEnvelope> = <F extends false | true | void = false>(

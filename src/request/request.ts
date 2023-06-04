@@ -4,13 +4,13 @@ import type {
     ExtractEnvelopeIn,
     ExtractEnvelopeOut,
     SubscribeCallback,
-} from './types';
-import { shallowCopyEnvelope } from './envelope';
-import { createSubscribe } from './subscribe';
-import { createDispatch } from './dispatch';
-import { createShortRandomString } from './utils';
+} from '../types';
+import { shallowCopyEnvelope } from '../envelope';
+import { createSubscribe } from '../subscribe';
+import { createDispatch } from '../dispatch';
+import { createShortRandomString } from '../utils';
 
-function createRequestName(type: string) {
+export function createRequestName(type: string) {
     return `Request(${type}[${createShortRandomString()}])`;
 }
 
@@ -22,17 +22,17 @@ export function createRequest<T extends EnvelopeTransmitter>(transmitter: T) {
         envelope: Out,
         callback: SubscribeCallback<In>,
     ) {
-        const name = createRequestName(envelope.type);
         const copy = shallowCopyEnvelope(envelope);
+        const seedRoute = envelope.routePassed ?? createRequestName(envelope.type);
         const isResponse = (envelope: AnyEnvelope): envelope is In => {
-            return envelope.routeAnnounced === undefined ? false : envelope.routeAnnounced.startsWith(name);
+            return envelope.routeAnnounced === undefined ? false : envelope.routeAnnounced.startsWith(seedRoute);
         };
         const subscriber = (envelope: AnyEnvelope) => {
             if (isResponse(envelope)) callback(envelope);
         };
         const unsubscribe = subscribe(subscriber, true);
 
-        copy.routePassed = name;
+        copy.routePassed = seedRoute;
         dispatch(copy);
 
         return unsubscribe;

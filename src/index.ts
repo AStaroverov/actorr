@@ -11,8 +11,8 @@ export { createActorFactory } from './createActorFactory';
 
 export { connectActorToActor } from './connectActorToActor';
 
-export { createRequest } from './request';
-export { createResponseFactory } from './response';
+export { createRequest } from './request/request';
+export { createResponseFactory } from './request/response';
 
 export * from './channel/types';
 export { ChannelCloseReason } from './channel/defs';
