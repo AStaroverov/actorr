@@ -1,9 +1,14 @@
 import { EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
-import { PING, PONG } from './defs';
+import { CLOSE, PING, PONG } from './defs';
 import { intervalProvider } from './providers';
 
 export const identity = <T = any>(v: T) => v;
 export const noop = (): any => {};
+
+export function closeMessagePort(port: MessagePort) {
+    port.postMessage(CLOSE);
+    port.close();
+}
 
 export function createShortRandomString() {
     return Math.round(Math.random() * Date.now()).toString(32);
@@ -61,6 +66,9 @@ export function waitMessagePort(port: MessagePort, signal?: AbortSignal) {
             if (event.data === PONG) {
                 clear();
                 resolve(undefined);
+            } else if (event.data === CLOSE) {
+                clear();
+                reject(undefined);
             }
         };
         const abortListener = () => {

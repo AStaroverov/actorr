@@ -111,7 +111,7 @@ describe(`Worker`, () => {
 
         expect(onConnect).toHaveBeenCalledTimes(1);
         expect(onConnect.mock.lastCall?.[0]).toBe(portName);
-        expect(onConnect.mock.lastCall?.[1]).toBeInstanceOf(MessagePort);
+        expect(onConnect.mock.lastCall?.[1]).toBeInstanceOf(WorkerGlobalScopeMock);
 
         workerScope.dispatch(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, portName));
 

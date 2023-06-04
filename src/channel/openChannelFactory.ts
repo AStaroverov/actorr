@@ -1,7 +1,7 @@
 import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { createRequest, createRequestName } from '../request/request';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_HANDSHAKE_TYPE, ChannelCloseReason, ChannelHandshakeEnvelope } from './defs';
-import { createMessagePortName, setPortName } from '../utils';
+import { closeMessagePort, createMessagePortName, setPortName } from '../utils';
 import { ChannelDispose, OpenChanelContext } from './types';
 import { createSubscribe } from '../subscribe';
 import { createEnvelope, shallowCopyEnvelope } from '../envelope';
@@ -58,7 +58,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 unsubscribeOnThreadTerminate();
                 dispose?.(reason);
                 dispatchToChannel(closeEnvelope);
-                timeoutProvider.setTimeout(() => port.close());
+                timeoutProvider.setTimeout(() => closeMessagePort(port));
             });
         });
 

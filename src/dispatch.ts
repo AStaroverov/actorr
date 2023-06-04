@@ -1,13 +1,15 @@
 import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
 import { AnyEnvelope } from './types';
-import { waitMessagePort } from './utils';
+import { noop, waitMessagePort } from './utils';
 
 const mapPortToReady = new WeakMap<MessagePort, true | Promise<unknown>>();
 export const createDispatchWithQueue = (port: MessagePort) => {
     if (!mapPortToReady.has(port)) {
         mapPortToReady.set(
             port,
-            waitMessagePort(port).then(() => mapPortToReady.set(port, true)),
+            waitMessagePort(port)
+                .then(() => mapPortToReady.set(port, true))
+                .catch(noop),
         );
     }
 
