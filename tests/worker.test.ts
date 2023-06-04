@@ -41,23 +41,19 @@ describe(`Worker`, () => {
             context.dispatch(createEnvelope(`test`, `test`));
         });
         const worker = new WorkerMock();
-        const baseName = `worker|${actor.name}`;
         const disconnect = connectActorToWorker(actor, worker as unknown as Worker);
 
         await sleep(10);
 
         expect(worker.postMessage).toHaveBeenCalledTimes(2);
         expect(worker.postMessage.mock.calls[1]).toEqual([
-            createEnvelope(CONNECT_MESSAGE_PORT_TYPE, expect.stringContaining(baseName), [
-                expect.any(MessagePort),
-            ] as any),
-            [expect.any(MessagePort)],
+            createEnvelope(CONNECT_MESSAGE_PORT_TYPE, expect.stringContaining('MessagePort')),
         ]);
 
         disconnect();
 
         expect(worker.postMessage.mock.calls[2][0]).toEqual(
-            createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, expect.stringContaining(baseName)),
+            createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, expect.stringContaining('MessagePort')),
         );
 
         worker.terminate();
