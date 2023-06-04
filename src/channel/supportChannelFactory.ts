@@ -32,9 +32,6 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
         const dispatchToChannel = createDispatch(localPort);
         const subscribeToChannel = createSubscribe<In>(localPort);
         const unsubscribeOnFastClose = subscribeToTransmitter((envelope: UnknownEnvelope | ChannelCloseEnvelope) => {
-            if (envelope.type === CHANNEL_CLOSE_TYPE && envelope.routePassed === target.routePassed) {
-                console.log('>> unsubscribeOnFastClose');
-            }
             return (
                 envelope.type === CHANNEL_CLOSE_TYPE &&
                 envelope.routePassed === target.routePassed &&
