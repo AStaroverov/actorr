@@ -1,11 +1,11 @@
 import { Actor, EnvelopeTransmitterWithMapper } from '../types';
 import { createEnvelope } from '../envelope';
 import { connectActorToMessagePort } from './connectActorToMessagePort';
-import { createMessagePortName, getEnvelopeTransmitter, getTransmitterMapper } from '../utils';
+import { getEnvelopeTransmitter, getTransmitterMapper } from '../utils';
 import { getWorkerMessagePort } from './utils';
 import { createDispatch } from '../dispatch';
-import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from './defs';
-import { threadName } from '../locks';
+import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE } from './defs';
+import { threadId } from '../locks';
 
 export function connectActorToWorker<A extends Actor, W extends Worker | SharedWorker>(
     _actor: A | EnvelopeTransmitterWithMapper<A>,
@@ -17,11 +17,11 @@ export function connectActorToWorker<A extends Actor, W extends Worker | SharedW
     const dispatchToWorker = createDispatch(workerPort);
     const disconnectTransmitters = connectActorToMessagePort(_actor, { transmitter: workerPort, map: mapper });
 
-    dispatchToWorker(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, createMessagePortName(threadName)));
+    dispatchToWorker(createEnvelope(CONNECT_THREAD_TYPE, threadId));
 
     return () => {
         disconnectTransmitters();
-        dispatchToWorker(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, createMessagePortName(threadName)));
+        dispatchToWorker(createEnvelope(DISCONNECT_THREAD_TYPE, threadId));
     };
 }
 

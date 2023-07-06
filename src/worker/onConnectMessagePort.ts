@@ -1,11 +1,6 @@
-import {
-    CONNECT_MESSAGE_PORT_TYPE,
-    DISCONNECT_MESSAGE_PORT_TYPE,
-    isDedicatedWorkerScope,
-    isSharedWorkerScope,
-} from './defs';
+import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE, isDedicatedWorkerScope, isSharedWorkerScope } from './defs';
 import { checkPortAsReadyOnMessage, noop, setPortName } from '../utils';
-import { currentThreadId, subscribeOnThreadTerminate } from '../locks';
+import { subscribeOnThreadTerminate, threadId } from '../locks';
 import { isEnvelope } from '../envelope';
 import { ConnectEnvelope, DisconnectEnvelope } from './types';
 
@@ -49,7 +44,7 @@ function createListener(port: MessagePort, callback: (name: string, port: Messag
 
         if (!isEnvelope(event.data)) return;
 
-        if (event.data.type === CONNECT_MESSAGE_PORT_TYPE) {
+        if (event.data.type === CONNECT_THREAD_TYPE) {
             const envelope = event.data as ConnectEnvelope;
             const name = envelope.payload;
 
@@ -71,7 +66,7 @@ function createListener(port: MessagePort, callback: (name: string, port: Messag
                     disposes.push(callbackDispose);
                 }
 
-                if (currentThreadId !== envelope.threadId) {
+                if (threadId !== envelope.threadId) {
                     disposes.push(subscribeOnThreadTerminate(envelope.threadId, disconnect));
                 }
 
@@ -79,7 +74,7 @@ function createListener(port: MessagePort, callback: (name: string, port: Messag
             }
         }
 
-        if (event.data.type === DISCONNECT_MESSAGE_PORT_TYPE) {
+        if (event.data.type === DISCONNECT_THREAD_TYPE) {
             const envelope = event.data as DisconnectEnvelope;
             const name = envelope.payload;
             const count = (mapPortNameCount.get(name) ?? 1) - 1;

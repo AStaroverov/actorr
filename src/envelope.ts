@@ -1,5 +1,5 @@
 import type { AnyEnvelope, Envelope } from './types';
-import { currentThreadId } from './locks';
+import { threadId } from './locks';
 
 export function isEnvelope<T extends Envelope<any, any>>(some: any): some is T {
     return typeof some === 'object' && typeof some.type === 'string';
@@ -14,7 +14,7 @@ export function createEnvelope<T extends string, P>(
         type,
         payload,
         transferable,
-        threadId: currentThreadId,
+        threadId,
         routePassed: undefined,
         routeAnnounced: undefined,
     };

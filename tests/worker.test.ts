@@ -11,7 +11,7 @@ import {
 import { createMailbox } from '../examples/common/actors/createActor';
 import { sleep } from './utils';
 import { WorkerGlobalScopeMock, WorkerMock } from './mocks';
-import { CONNECT_MESSAGE_PORT_TYPE, DISCONNECT_MESSAGE_PORT_TYPE } from '../src/worker/defs';
+import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE } from '../src/worker/defs';
 
 describe(`Worker`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
@@ -47,13 +47,13 @@ describe(`Worker`, () => {
 
         expect(worker.postMessage).toHaveBeenCalledTimes(2);
         expect(worker.postMessage.mock.calls[1]).toEqual([
-            createEnvelope(CONNECT_MESSAGE_PORT_TYPE, expect.stringContaining('MessagePort')),
+            createEnvelope(CONNECT_THREAD_TYPE, expect.stringContaining('unknown')),
         ]);
 
         disconnect();
 
         expect(worker.postMessage.mock.calls[2][0]).toEqual(
-            createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, expect.stringContaining('MessagePort')),
+            createEnvelope(DISCONNECT_THREAD_TYPE, expect.stringContaining('unknown')),
         );
 
         worker.terminate();
@@ -105,7 +105,7 @@ describe(`Worker`, () => {
             isSharedWorkerScope: (context): context is SharedWorkerGlobalScope => false,
         });
 
-        workerScope.dispatch(createEnvelope(CONNECT_MESSAGE_PORT_TYPE, portName), [channel.port1]);
+        workerScope.dispatch(createEnvelope(CONNECT_THREAD_TYPE, portName), [channel.port1]);
 
         await sleep(10);
 
@@ -113,7 +113,7 @@ describe(`Worker`, () => {
         expect(onConnect.mock.lastCall?.[0]).toBe(portName);
         expect(onConnect.mock.lastCall?.[1]).toBeInstanceOf(WorkerGlobalScopeMock);
 
-        workerScope.dispatch(createEnvelope(DISCONNECT_MESSAGE_PORT_TYPE, portName));
+        workerScope.dispatch(createEnvelope(DISCONNECT_THREAD_TYPE, portName));
 
         await sleep(10);
 
