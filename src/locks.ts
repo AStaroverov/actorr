@@ -15,11 +15,9 @@ export const threadName = isSharedWorkerScope(globalThis)
     : isWindowScope(globalThis)
     ? 'window'
     : 'unknown';
-export const currentThreadId = `${threadName}[${createShortRandomString()}]`;
+export const threadId = `${threadName}[${createShortRandomString()}]`;
 
-export const lockThread = webLocksSupported
-    ? () => navigator.locks.request(currentThreadId, () => new Promise(noop))
-    : noop;
+export const lockThread = webLocksSupported ? () => navigator.locks.request(threadId, () => new Promise(noop)) : noop;
 
 export const subscribeOnThreadTerminate = webLocksSupported
     ? function subscribeOnThreadTerminate(threadId: string, callback: () => void) {

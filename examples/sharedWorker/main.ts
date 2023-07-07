@@ -1,7 +1,8 @@
 import { connectActorToWorker } from '../../src';
 import { createActorMain } from './actor';
 
-const actorMain = createActorMain();
+const actorMain1 = createActorMain();
+const actorMain2 = createActorMain();
 // const sumWorker = new SharedWorker(new URL('../common/workers/sumWorker.ts', import.meta.url), {
 //     name: 'sumWorker',
 //     type: 'module',
@@ -15,7 +16,8 @@ const pingWorker = new SharedWorker(new URL('../common/workers/pingWorker.ts', i
     type: 'module',
 });
 
-connectActorToWorker(actorMain, pingWorker);
+connectActorToWorker(actorMain1, pingWorker);
+connectActorToWorker(actorMain2, pingWorker);
 // connectActorToWorker(actorMain, multiplyWorker);
 
 // await connectWorkerToWorker(
@@ -23,4 +25,5 @@ connectActorToWorker(actorMain, pingWorker);
 //     { name: 'MULTIPLY_WORKER', worker: multiplyWorker },
 // );
 
-actorMain.launch();
+actorMain1.launch();
+actorMain2.launch();
