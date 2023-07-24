@@ -1,34 +1,18 @@
 import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
 import { AnyEnvelope } from './types';
-import { noop, waitMessagePort } from './utils';
+import { onPortResolve } from './utils';
 
-const mapPortToReady = new WeakMap<MessagePort, true | Promise<unknown>>();
-export const createDispatchWithQueue = (port: MessagePort) => {
-    if (!mapPortToReady.has(port)) {
-        mapPortToReady.set(
-            port,
-            waitMessagePort(port)
-                .then(() => mapPortToReady.set(port, true))
-                .catch(noop),
-        );
-    }
-
-    const postMessage = (envelope: AnyEnvelope) => {
-        try {
-            port.postMessage(envelope, envelope.transferable as any);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
+function createDispatchWithQueue(port: MessagePort) {
     return function dispatchWithQueue(envelope: AnyEnvelope) {
-        const isReadyOrPromise = mapPortToReady.get(port);
-
-        if (isReadyOrPromise === undefined) throw new Error('Impossible state');
-        if (isReadyOrPromise === true) return postMessage(envelope);
-        isReadyOrPromise.then(() => postMessage(envelope));
+        onPortResolve(port, (state) => {
+            try {
+                state && port.postMessage(envelope, envelope.transferable as any);
+            } catch (err) {
+                console.error(err);
+            }
+        });
     };
-};
+}
 
 export function createDispatch<T extends EnvelopeDispatchTarget>(target: T) {
     if (typeof target === 'object' && 'postMessage' in target) {

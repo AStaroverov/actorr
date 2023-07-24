@@ -1,6 +1,6 @@
 import { EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
 import { CLOSE, PING, PONG } from './defs';
-import { intervalProvider } from './providers';
+import { intervalProvider, timeoutProvider } from './providers';
 
 export const identity = <T = any>(v: T) => v;
 export const noop = (): any => {};
@@ -52,36 +52,49 @@ export function getTransmitterName<T extends EnvelopeTransmitter>(source: T) {
     throw new Error('Can`t detect transmitter name');
 }
 
-export function waitMessagePort(port: MessagePort, signal?: AbortSignal) {
-    const sendPing = () => port.postMessage(PING);
+const mapPortToState = new WeakMap<MessagePort, boolean | Promise<boolean>>();
 
-    return new Promise((resolve, reject) => {
-        const intervalId = intervalProvider.setInterval(sendPing, 25);
-        const clear = () => {
-            intervalProvider.clearInterval(intervalId);
-            port.removeEventListener('message', portListener);
-            signal?.removeEventListener('abort', abortListener);
-        };
-        const portListener = (event: MessageEvent) => {
-            if (event.data === PONG) {
-                clear();
-                resolve(undefined);
-            } else if (event.data === CLOSE) {
-                clear();
-                reject(undefined);
-            }
-        };
-        const abortListener = () => {
-            clear();
-            reject(new Error('Aborted'));
-        };
+export function onPortResolve(port: MessagePort, callback: (state: boolean) => void): void {
+    if (!mapPortToState.has(port)) {
+        const promise = new Promise<boolean>((resolve, reject) => {
+            const timeoutId = timeoutProvider.setTimeout(
+                () => reject(new Error('Message port was rejected on timeout')),
+                60_000,
+            );
+            const intervalId = intervalProvider.setInterval(() => port.postMessage(PING), 25);
+            const clear = () => {
+                timeoutProvider.clearTimeout(timeoutId);
+                intervalProvider.clearInterval(intervalId);
+                port.removeEventListener('message', portListener);
+            };
+            const portListener = (event: MessageEvent) => {
+                if (event.data === PONG) {
+                    clear();
+                    resolve(true);
+                    mapPortToState.set(port, true);
+                } else if (event.data === CLOSE) {
+                    clear();
+                    resolve(false);
+                    mapPortToState.set(port, false);
+                }
+            };
 
-        port.start();
-        port.addEventListener('message', portListener);
-        signal?.addEventListener('abort', abortListener);
+            port.start();
+            port.addEventListener('message', portListener);
 
-        queueMicrotask(sendPing);
-    });
+            queueMicrotask(() => port.postMessage(PING));
+        });
+
+        mapPortToState.set(port, promise);
+    }
+
+    const state = mapPortToState.get(port)!;
+
+    if (state instanceof Promise) {
+        state.then(callback);
+    } else {
+        callback(state);
+    }
 }
 
 export function isPortReadyCheck(event: MessageEvent) {
