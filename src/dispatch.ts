@@ -1,6 +1,7 @@
 import type { EnvelopeDispatchTarget, ExtractEnvelope } from './types';
 import { AnyEnvelope } from './types';
 import { onPortResolve } from './utils';
+import { loggerProvider } from './providers';
 
 function createDispatchWithQueue(port: MessagePort) {
     return function dispatchWithQueue(envelope: AnyEnvelope) {
@@ -8,7 +9,7 @@ function createDispatchWithQueue(port: MessagePort) {
             try {
                 state && port.postMessage(envelope, envelope.transferable as any);
             } catch (err) {
-                console.error(err);
+                loggerProvider.error(err);
             }
         });
     };

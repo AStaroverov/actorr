@@ -1,11 +1,13 @@
 import { createShortRandomString, noop } from './utils';
 import { isDedicatedWorkerScope, isSharedWorkerScope, isWindowScope } from './worker/defs';
-import { timeoutProvider } from './providers';
+import { loggerProvider, timeoutProvider } from './providers';
 
 const webLocksSupported = globalThis.navigator !== undefined && globalThis.navigator.locks !== undefined;
 
 if (!webLocksSupported && process.env.NODE_ENV !== 'test') {
-    console.warn('navigator.locks is not implemented, that means that WebActor cannot detect thread termination');
+    loggerProvider.warn(
+        'navigator.locks is not implemented, that means that WebActor cannot detect thread termination',
+    );
 }
 
 export const threadName = isSharedWorkerScope(globalThis)

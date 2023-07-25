@@ -1,6 +1,6 @@
 import { EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
 import { CLOSE, PING, PONG } from './defs';
-import { intervalProvider, timeoutProvider } from './providers';
+import { intervalProvider, loggerProvider, timeoutProvider } from './providers';
 
 export const identity = <T = any>(v: T) => v;
 export const noop = (): any => {};
@@ -36,7 +36,7 @@ export function setPortName(port: MessagePort, name: string) {
     if (currentName === undefined) {
         mapPortToName.set(port, name);
     } else {
-        console.warn(`Port name already set to "${currentName}", can't set to "${name}"`);
+        loggerProvider.warn(`Port name already set to "${currentName}", can't set to "${name}"`);
     }
 }
 
@@ -54,13 +54,14 @@ export function getTransmitterName<T extends EnvelopeTransmitter>(source: T) {
 
 const mapPortToState = new WeakMap<MessagePort, boolean | Promise<boolean>>();
 
-export function onPortResolve(port: MessagePort, callback: (state: boolean) => void): void {
+export function onPortResolve(port: MessagePort, onResolve: (state: boolean) => void): void {
     if (!mapPortToState.has(port)) {
-        const promise = new Promise<boolean>((resolve, reject) => {
-            const timeoutId = timeoutProvider.setTimeout(
-                () => reject(new Error('Message port was rejected on timeout')),
-                60_000,
-            );
+        const promise = new Promise<boolean>((resolve) => {
+            const timeoutId = timeoutProvider.setTimeout(() => {
+                loggerProvider.warn(`Message port "${getPortName(port)}" was rejected on timeout`);
+                resolve(false);
+                mapPortToState.set(port, false);
+            }, 60_000);
             const intervalId = intervalProvider.setInterval(() => port.postMessage(PING), 25);
             const clear = () => {
                 timeoutProvider.clearTimeout(timeoutId);
@@ -91,9 +92,9 @@ export function onPortResolve(port: MessagePort, callback: (state: boolean) => v
     const state = mapPortToState.get(port)!;
 
     if (state instanceof Promise) {
-        state.then(callback);
+        state.then(onResolve);
     } else {
-        callback(state);
+        onResolve(state);
     }
 }
 

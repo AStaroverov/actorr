@@ -49,3 +49,14 @@ export const timeoutProvider: TimeoutProvider = {
     },
     delegate: undefined,
 };
+
+type Logger = Pick<typeof console, 'warn' | 'error'>;
+export const loggerProvider: Logger & { delegate: undefined | Partial<Logger> } = {
+    warn(...args: any[]) {
+        return (loggerProvider.delegate?.warn || console.warn)('Webactor: ', ...args);
+    },
+    error(...args: any[]) {
+        return (loggerProvider.delegate?.error || console.error)('Webactor: ', ...args);
+    },
+    delegate: undefined,
+};
