@@ -1,7 +1,7 @@
 import { Actor, EnvelopeTransmitterWithMapper } from '../types';
 import { createEnvelope } from '../envelope';
 import { connectActorToMessagePort } from './connectActorToMessagePort';
-import { getEnvelopeTransmitter, getTransmitterMapper } from '../utils';
+import { getEnvelopeTransmitter, getTransmitterMapper } from '../utils/common';
 import { getWorkerMessagePort } from './utils';
 import { createDispatch } from '../dispatch';
 import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE } from './defs';

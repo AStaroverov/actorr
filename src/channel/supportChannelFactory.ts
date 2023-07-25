@@ -2,12 +2,12 @@ import type { ExtractEnvelopeIn, ExtractEnvelopeOut, UnknownEnvelope, ValueOf } 
 import { EnvelopeTransmitter } from '../types';
 import type { ChannelDispose, SupportChanelContext } from './types';
 import { createResponseFactory } from '../request/response';
-import { closeMessagePort, createMessagePortName, onPortResolve, setPortName } from '../utils';
 import { createEnvelope } from '../envelope';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_HANDSHAKE_TYPE, ChannelCloseEnvelope, ChannelCloseReason } from './defs';
 import { createDispatch } from '../dispatch';
 import { createSubscribe } from '../subscribe';
 import { subscribeOnThreadTerminate } from '../locks';
+import { closePort, createMessagePortName, onPortResolve, setPortName } from '../utils/MessagePort';
 
 export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const createResponse = createResponseFactory(createDispatch(transmitter));
@@ -27,18 +27,18 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
 
         createResponse<Out>(target)(createEnvelope(CHANNEL_HANDSHAKE_TYPE, remotePort, [remotePort]));
 
-        let closeChannel: ChannelDispose;
+        let closeChannel: (reason: ValueOf<typeof ChannelCloseReason>) => void;
         const dispatchToChannel = createDispatch(localPort);
         const subscribeToChannel = createSubscribe<In>(localPort);
         const unsubscribeOnFastClose = subscribeToTransmitter((envelope: UnknownEnvelope | ChannelCloseEnvelope) => {
             return (
                 envelope.type === CHANNEL_CLOSE_TYPE &&
                 envelope.routePassed === target.routePassed &&
-                closeChannel(ChannelCloseReason.Manual)
+                closeChannel(ChannelCloseReason.ManualByOpener)
             );
         }, true);
         const unsubscribeOnCloseChannel = subscribeToChannel(
-            (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.Manual),
+            (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.ManualByOpener),
             true,
         );
         const unsubscribeOnThreadTerminate = subscribeOnThreadTerminate(target.threadId, () => {
@@ -51,12 +51,19 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             unsubscribeOnCloseChannel();
             unsubscribeOnFastClose();
             dispose?.(reason);
-            dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
-            onPortResolve(localPort, () => closeMessagePort(localPort));
+
+            if (reason === ChannelCloseReason.ManualByOpener) {
+                closePort(localPort);
+            }
+
+            if (reason === ChannelCloseReason.ManualBySupporter) {
+                dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
+                onPortResolve(localPort, () => closePort(localPort));
+            }
         };
 
         return () => {
-            closeChannel(ChannelCloseReason.Manual);
+            closeChannel(ChannelCloseReason.ManualBySupporter);
         };
     };
 }

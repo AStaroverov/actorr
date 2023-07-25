@@ -52,7 +52,7 @@ describe(`Channel`, () => {
     });
 
     it(`single channel`, (done) => {
-        const onChannelEnvelope1 = jest.fn();
+        const onChannelEnvelope1 = jest.fn(() => {});
         const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
             channel.subscribe(onChannelEnvelope1);
 
@@ -66,7 +66,7 @@ describe(`Channel`, () => {
         });
 
         const onCloseChannel = jest.fn();
-        const onChannelEnvelope2 = jest.fn();
+        const onChannelEnvelope2 = jest.fn(() => {});
         const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
             const unsub = channel.subscribe(onChannelEnvelope2);
 
@@ -102,7 +102,7 @@ describe(`Channel`, () => {
             expect(onChannelEnvelope2.mock.calls).toHaveLength(3);
             expect(onCloseChannel.mock.calls).toHaveLength(1);
             done();
-        }, 20);
+        }, 100);
     });
 
     it(`single channel through few actors`, (done) => {

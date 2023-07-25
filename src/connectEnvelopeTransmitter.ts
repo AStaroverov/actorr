@@ -1,5 +1,5 @@
 import type { AnyEnvelope, Envelope, EnvelopeTransmitter, EnvelopeTransmitterWithMapper } from './types';
-import { getEnvelopeTransmitter, getTransmitterMapper, getTransmitterName } from './utils';
+import { getEnvelopeTransmitter, getTransmitterMapper, getTransmitterName } from './utils/common';
 import { subscribe } from './subscribe';
 import { createDispatch } from './dispatch';
 import { extendRoute, reduceRoute, routeEndsWith } from './route';

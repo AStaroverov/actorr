@@ -26,9 +26,9 @@ export { onConnectMessagePort } from './worker/onConnectMessagePort';
 export { connectActorToWorker, connectWorkerToActor } from './worker/connectActorToWorker';
 export { connectMessagePortToActor, connectActorToMessagePort } from './worker/connectActorToMessagePort';
 
-export { createMessagePortName } from './utils';
 export { createDispatch, dispatch } from './dispatch';
 export { createSubscribe, subscribe } from './subscribe';
 
 // we need more tests to export this
 // export { connectWorkerToWorker } from './worker/connectWorkerToWorker';
+export { createMessagePortName } from './utils/MessagePort';

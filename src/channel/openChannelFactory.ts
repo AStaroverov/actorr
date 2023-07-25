@@ -1,13 +1,12 @@
 import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
 import { createRequest, createRequestName } from '../request/request';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_HANDSHAKE_TYPE, ChannelCloseReason, ChannelHandshakeEnvelope } from './defs';
-import { closeMessagePort, createMessagePortName, setPortName } from '../utils';
 import { ChannelDispose, OpenChanelContext } from './types';
 import { createSubscribe } from '../subscribe';
 import { createEnvelope, shallowCopyEnvelope } from '../envelope';
 import { subscribeOnThreadTerminate } from '../locks';
 import { createDispatch } from '../dispatch';
-import { timeoutProvider } from '../providers';
+import { closePort, createMessagePortName, onPortResolve, setPortName } from '../utils/MessagePort';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
@@ -41,7 +40,8 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
             const dispatchToChannel = createDispatch(port);
             const subscribeToChannel = createSubscribe<In>(port);
             const unsubscribeOnCloseChannel = subscribeToChannel(
-                (envelope) => envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.Manual),
+                (envelope) =>
+                    envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.ManualBySupporter),
                 true,
             );
             const unsubscribeOnThreadTerminate = subscribeOnThreadTerminate(envelope.threadId, () =>
@@ -50,15 +50,22 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
             const dispose = onOpen({
                 dispatch: dispatchToChannel,
                 subscribe: subscribeToChannel,
-                close: () => closeChannel(ChannelCloseReason.Manual),
+                close: () => closeChannel(ChannelCloseReason.ManualByOpener),
             });
 
             mapDispose.set(port, (reason: ValueOf<typeof ChannelCloseReason>) => {
                 unsubscribeOnCloseChannel();
                 unsubscribeOnThreadTerminate();
                 dispose?.(reason);
-                dispatchToChannel(closeEnvelope);
-                timeoutProvider.setTimeout(() => closeMessagePort(port));
+
+                if (reason === ChannelCloseReason.ManualBySupporter) {
+                    closePort(port);
+                }
+
+                if (reason === ChannelCloseReason.ManualByOpener) {
+                    dispatchToChannel(closeEnvelope);
+                    onPortResolve(port, () => closePort(port));
+                }
             });
         });
 

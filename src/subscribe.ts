@@ -1,7 +1,8 @@
 import { isEnvelope } from './envelope';
 import { AnyEnvelope, EnvelopeSubscribeSource, Subscribe, SubscribeCallback, SystemEnvelope } from './types';
 import { isSystemEnvelope } from './isSystemEnvelope';
-import { checkPortAsReadyOnMessage } from './utils';
+
+import { checkPortAsReadyOnMessage } from './utils/MessagePort';
 
 function createWrapper<T extends AnyEnvelope>(callback: SubscribeCallback<T>, withSystemEnvelopes?: void | boolean) {
     return withSystemEnvelopes === true ? callback : (envelope: T) => !isSystemEnvelope(envelope) && callback(envelope);

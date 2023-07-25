@@ -2,7 +2,7 @@ import { createActor } from '../common/actors/createActor';
 import { MULTIPLY_ACTION_TYPE, TMultiplyActionEnvelope, TMultiplyResultEnvelope } from '../common/actors/multiply/defs';
 import { AnyEnvelope, createEnvelope, createRequest, openChannelFactory } from '../../src';
 import { PING_TYPE, TPingEnvelope } from '../common/actors/pingpong/defs';
-import { createShortRandomString } from '../../src/utils';
+import { createShortRandomString } from '../../src/utils/common';
 
 export function createActorMain() {
     return createActor<TMultiplyResultEnvelope | TPingEnvelope, TMultiplyActionEnvelope | TPingEnvelope>(

@@ -8,7 +8,7 @@ import type {
 import { shallowCopyEnvelope } from '../envelope';
 import { createSubscribe } from '../subscribe';
 import { createDispatch } from '../dispatch';
-import { createShortRandomString } from '../utils';
+import { createShortRandomString } from '../utils/common';
 
 export function createRequestName(type: string) {
     return `Request(${type}[${createShortRandomString()}])`;

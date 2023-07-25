@@ -1,8 +1,9 @@
 import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE, isDedicatedWorkerScope, isSharedWorkerScope } from './defs';
-import { checkPortAsReadyOnMessage, noop, setPortName } from '../utils';
+import { noop } from '../utils/common';
 import { subscribeOnThreadTerminate, threadId } from '../locks';
 import { isEnvelope } from '../envelope';
 import { ConnectEnvelope, DisconnectEnvelope } from './types';
+import { checkPortAsReadyOnMessage, setPortName } from '../utils/MessagePort';
 
 const dependencies = <const>{
     isDedicatedWorkerScope,

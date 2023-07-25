@@ -1,4 +1,4 @@
-import { createShortRandomString, noop } from './utils';
+import { createShortRandomString, noop } from './utils/common';
 import { isDedicatedWorkerScope, isSharedWorkerScope, isWindowScope } from './worker/defs';
 import { loggerProvider, timeoutProvider } from './providers';
 

@@ -4,7 +4,8 @@ export type OpenChannelId = string;
 
 // don't use enum, when we use object we can use string for functions as argument, useful for external users
 export const ChannelCloseReason = <const>{
-    Manual: 'Manual',
+    ManualByOpener: 'ManualByOpener',
+    ManualBySupporter: 'ManualBySupporter',
     Destroy: 'Destroy',
     LoseChannel: 'LoseChannel',
 };
