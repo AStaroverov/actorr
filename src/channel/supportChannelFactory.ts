@@ -2,13 +2,12 @@ import type { ExtractEnvelopeIn, ExtractEnvelopeOut, UnknownEnvelope, ValueOf } 
 import { EnvelopeTransmitter } from '../types';
 import type { ChannelDispose, SupportChanelContext } from './types';
 import { createResponseFactory } from '../request/response';
-import { closeMessagePort, createMessagePortName, setPortName } from '../utils';
+import { closeMessagePort, createMessagePortName, onPortResolve, setPortName } from '../utils';
 import { createEnvelope } from '../envelope';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_HANDSHAKE_TYPE, ChannelCloseEnvelope, ChannelCloseReason } from './defs';
 import { createDispatch } from '../dispatch';
 import { createSubscribe } from '../subscribe';
 import { subscribeOnThreadTerminate } from '../locks';
-import { timeoutProvider } from '../providers';
 
 export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const createResponse = createResponseFactory(createDispatch(transmitter));
@@ -53,7 +52,7 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             unsubscribeOnFastClose();
             dispose?.(reason);
             dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
-            timeoutProvider.setTimeout(() => closeMessagePort(localPort));
+            onPortResolve(localPort, () => closeMessagePort(localPort));
         };
 
         return () => {

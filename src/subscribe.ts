@@ -25,6 +25,10 @@ function addReadyCheckApproval(port: MessagePort) {
 }
 
 export function createSubscribe<T extends AnyEnvelope>(source: EnvelopeSubscribeSource<T>): Subscribe<T> {
+    if (typeof source === 'object' && 'postMessage' in source) {
+        addReadyCheckApproval(source);
+    }
+
     return function subscribe(callback, withSystemEnvelopes) {
         const wrapper = createWrapper(callback, withSystemEnvelopes);
 
@@ -38,8 +42,6 @@ export function createSubscribe<T extends AnyEnvelope>(source: EnvelopeSubscribe
 
             source.start();
             source.addEventListener('message', postMessageWrapper);
-
-            addReadyCheckApproval(source);
 
             return () => source.removeEventListener('message', postMessageWrapper);
         }

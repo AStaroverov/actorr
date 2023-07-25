@@ -5,6 +5,7 @@ import { createDispatch } from './dispatch';
 import { extendRoute, reduceRoute, routeEndsWith } from './route';
 import { shallowCopyEnvelope } from './envelope';
 import { isSystemEnvelope } from './isSystemEnvelope';
+import { loggerProvider } from './providers';
 
 export function connectEnvelopeTransmitter<T1 extends EnvelopeTransmitter, T2 extends EnvelopeTransmitter>(
     _transmitter1: T1 | EnvelopeTransmitterWithMapper<T1>,
@@ -49,7 +50,7 @@ function createRedispatch(
         try {
             dispatch(copy);
         } catch (err) {
-            console.error(err);
+            loggerProvider.error(err);
         }
     };
 }
