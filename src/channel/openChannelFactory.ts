@@ -10,7 +10,6 @@ import { createEnvelope } from '../envelope';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
-    const dispatch = createDispatch(transmitter);
 
     return function openChannel<In extends ExtractEnvelopeIn<T>, Out extends ExtractEnvelopeOut<T>>(
         envelope: ExtractEnvelopeOut<T>,
@@ -49,12 +48,20 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 close: () => closeChannel(ChannelCloseReason.ManualByOpener),
             });
 
+            onPortResolve(port, (state) => {
+                if (!state) closeChannel(ChannelCloseReason.HandshakeFail);
+            });
+
             mapDispose.set(port, (reason: ValueOf<typeof ChannelCloseReason>) => {
                 unsubscribeOnCloseChannel();
                 unsubscribeOnThreadTerminate();
                 dispose?.(reason);
 
-                if (reason === ChannelCloseReason.ManualBySupporter || reason === ChannelCloseReason.LoseChannel) {
+                if (
+                    reason === ChannelCloseReason.ManualBySupporter ||
+                    reason === ChannelCloseReason.HandshakeFail ||
+                    reason === ChannelCloseReason.LoseChannel
+                ) {
                     closePort(port);
                 } else {
                     dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));

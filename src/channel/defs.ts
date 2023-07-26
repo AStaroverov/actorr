@@ -6,6 +6,7 @@ export type OpenChannelId = string;
 export const ChannelCloseReason = <const>{
     ManualByOpener: 'ManualByOpener',
     ManualBySupporter: 'ManualBySupporter',
+    HandshakeFail: 'HandshakeFail',
     Destroy: 'Destroy',
     LoseChannel: 'LoseChannel',
 };

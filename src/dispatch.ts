@@ -6,7 +6,7 @@ import { onPortResolve } from './utils/MessagePort';
 function createDispatchWithQueue(port: MessagePort) {
     return function dispatchWithQueue(envelope: AnyEnvelope) {
         onPortResolve(port, (state) => {
-            if (state === false) return;
+            if (!state) return;
             try {
                 port.postMessage(envelope, envelope.transferable as any);
             } catch (err) {

@@ -8,6 +8,7 @@ import { createDispatch } from '../dispatch';
 import { createSubscribe } from '../subscribe';
 import { subscribeOnThreadTerminate } from '../locks';
 import { closePort, createMessagePortName, onPortResolve, setPortName } from '../utils/MessagePort';
+import { noop } from '../utils/common';
 
 export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const createResponse = createResponseFactory(createDispatch(transmitter));
@@ -38,12 +39,22 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
         });
         const dispose = onOpen({ dispatch: dispatchToChannel, subscribe: subscribeToChannel });
 
+        onPortResolve(localPort, (state) => {
+            if (!state) closeChannel(ChannelCloseReason.HandshakeFail);
+        });
+
         closeChannel = (reason: ValueOf<typeof ChannelCloseReason>) => {
+            closeChannel = noop;
+
             unsubscribeOnThreadTerminate();
             unsubscribeOnCloseChannel();
             dispose?.(reason);
 
-            if (reason === ChannelCloseReason.ManualByOpener || reason === ChannelCloseReason.LoseChannel) {
+            if (
+                reason === ChannelCloseReason.ManualByOpener ||
+                reason === ChannelCloseReason.HandshakeFail ||
+                reason === ChannelCloseReason.LoseChannel
+            ) {
                 closePort(localPort);
             } else {
                 dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
