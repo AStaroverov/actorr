@@ -8,6 +8,7 @@ import { closePort, createMessagePortName, onPortResolve, setPortName } from '..
 import { createEnvelope, shallowCopyEnvelope } from '../envelope';
 import { createShortRandomString } from '../utils/common';
 import { lock, subscribeOnUnlock } from '../utils/Locks';
+import { timeoutProvider } from '../providers';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
@@ -46,14 +47,13 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
             const dispatchToChannel = createDispatch(port);
             const subscribeToChannel = createSubscribe<In>(port);
 
-            const unsubscribeOnCloseChannel = subscribeToChannel(
-                (envelope) =>
-                    envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.ManualBySupporter),
-                true,
-            );
-            const unsubscribeOnChannelTerminate = subscribeOnUnlock(envelope.uniqueId, () =>
-                closeChannel(ChannelCloseReason.LoseChannel),
-            );
+            const unsubscribeOnCloseChannel = subscribeToChannel((envelope) => {
+                return envelope.type === CHANNEL_CLOSE_TYPE && closeChannel(ChannelCloseReason.ManualBySupporter);
+            }, true);
+            const unsubscribeOnChannelTerminate = subscribeOnUnlock(envelope.uniqueId, () => {
+                // close message can be in browser queue, so we need to wait a little
+                timeoutProvider.setTimeout(() => closeChannel(ChannelCloseReason.LoseChannel), 1000);
+            });
             const dispose = onOpen({
                 dispatch: dispatchToChannel,
                 subscribe: subscribeToChannel,

@@ -9,6 +9,7 @@ import { createSubscribe } from '../subscribe';
 import { closePort, createMessagePortName, onPortResolve, setPortName } from '../utils/MessagePort';
 import { noop } from '../utils/common';
 import { lock, subscribeOnUnlock } from '../utils/Locks';
+import { timeoutProvider } from '../providers';
 
 export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const createResponse = createResponseFactory(createDispatch(transmitter));
@@ -37,7 +38,8 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             true,
         );
         const unsubscribeOnChannelTerminate = subscribeOnUnlock(target.uniqueId, () => {
-            closeChannel(ChannelCloseReason.LoseChannel);
+            // close message can be in browser queue, so we need to wait a little
+            timeoutProvider.setTimeout(() => closeChannel(ChannelCloseReason.LoseChannel), 1000);
         });
         const dispose = onOpen({ dispatch: dispatchToChannel, subscribe: subscribeToChannel });
 
