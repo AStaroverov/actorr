@@ -63,11 +63,8 @@ export function onPortResolve(port: MessagePort, onResolve: (state: boolean) => 
         port.addEventListener('message', portListener);
 
         queueMicrotask(() => port.postMessage(PING));
+        const timeoutId = timeoutProvider.setTimeout(() => defer.resolve(false), 10_000);
         const intervalId = intervalProvider.setInterval(() => port.postMessage(PING), 25);
-        const timeoutId = timeoutProvider.setTimeout(() => {
-            loggerProvider.warn(`Message port "${getPortName(port)}" was rejected on timeout`);
-            defer.resolve(false);
-        }, 60_000);
 
         defer.promise
             .then((state) => mapPortToState.set(port, state))

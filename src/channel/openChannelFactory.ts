@@ -1,12 +1,12 @@
 import { EnvelopeTransmitter, ExtractEnvelopeIn, ExtractEnvelopeOut, ValueOf } from '../types';
-import { createRequest, createRequestName } from '../request/request';
+import { createRequest } from '../request/request';
 import { CHANNEL_CLOSE_TYPE, CHANNEL_HANDSHAKE_TYPE, ChannelCloseReason, ChannelHandshakeEnvelope } from './defs';
 import { ChannelDispose, OpenChanelContext } from './types';
 import { createSubscribe } from '../subscribe';
-import { createEnvelope, shallowCopyEnvelope } from '../envelope';
 import { subscribeOnThreadTerminate } from '../locks';
 import { createDispatch } from '../dispatch';
 import { closePort, createMessagePortName, onPortResolve, setPortName } from '../utils/MessagePort';
+import { createEnvelope } from '../envelope';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
@@ -18,16 +18,12 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
     ) {
         const mapDispose = new Map<MessagePort, Function>();
 
-        const openEnvelope = shallowCopyEnvelope(envelope);
-        const closeEnvelope = createEnvelope(CHANNEL_CLOSE_TYPE, undefined);
-        closeEnvelope.routePassed = openEnvelope.routePassed = createRequestName(envelope.type);
-
         const createCloseChannel = (port: MessagePort) => (reason: ValueOf<typeof ChannelCloseReason>) => {
             mapDispose.get(port)?.(reason);
             mapDispose.delete(port);
         };
 
-        const closeRequestResponse = request(openEnvelope, (envelope) => {
+        const closeRequestResponse = request(envelope, (envelope) => {
             if (envelope.type !== CHANNEL_HANDSHAKE_TYPE) return;
 
             const port = (envelope as ChannelHandshakeEnvelope).payload;
@@ -58,12 +54,10 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 unsubscribeOnThreadTerminate();
                 dispose?.(reason);
 
-                if (reason === ChannelCloseReason.ManualBySupporter) {
+                if (reason === ChannelCloseReason.ManualBySupporter || reason === ChannelCloseReason.LoseChannel) {
                     closePort(port);
-                }
-
-                if (reason === ChannelCloseReason.ManualByOpener) {
-                    dispatchToChannel(closeEnvelope);
+                } else {
+                    dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
                     onPortResolve(port, () => closePort(port));
                 }
             });
@@ -77,9 +71,6 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
             }
 
             mapDispose.clear();
-
-            // Necessary only for web workers case
-            dispatch(closeEnvelope);
         };
     };
 }
