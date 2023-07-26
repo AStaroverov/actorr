@@ -1,5 +1,4 @@
 import { ChannelCloseEnvelope, ChannelHandshakeEnvelope } from './channel/defs';
-import { HeartbeatEnvelope } from './heartbeat/def';
 
 export type ValueOf<T> = T[keyof T];
 
@@ -14,6 +13,7 @@ export type Envelope<T extends string, P> = {
     payload: P;
     transferable: undefined | Transferable[];
 
+    uniqueId: string;
     threadId: string;
     routePassed: undefined | string;
     routeAnnounced: undefined | string;
@@ -21,7 +21,7 @@ export type Envelope<T extends string, P> = {
 
 export type AnyEnvelope = Envelope<any, any>;
 export type UnknownEnvelope = Envelope<string, unknown>;
-export type SystemEnvelope = ChannelHandshakeEnvelope | ChannelCloseEnvelope | HeartbeatEnvelope;
+export type SystemEnvelope = ChannelHandshakeEnvelope | ChannelCloseEnvelope;
 
 export type Dispatch<T extends AnyEnvelope> = (envelope: T | SystemEnvelope) => unknown;
 export type Subscribe<T extends AnyEnvelope> = <F extends false | true | void = false>(

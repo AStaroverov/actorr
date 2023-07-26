@@ -1,3 +1,4 @@
+import './locks';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import type { Actor, AnyEnvelope, Envelope, OpenChanelContext, SupportChanelContext } from '../src';

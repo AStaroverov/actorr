@@ -5,7 +5,7 @@ import { getEnvelopeTransmitter, getTransmitterMapper } from '../utils/common';
 import { getWorkerMessagePort } from './utils';
 import { createDispatch } from '../dispatch';
 import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE } from './defs';
-import { threadId } from '../locks';
+import { threadId } from '../utils/thread';
 
 export function connectActorToWorker<A extends Actor, W extends Worker | SharedWorker>(
     _actor: A | EnvelopeTransmitterWithMapper<A>,
