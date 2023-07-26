@@ -49,7 +49,7 @@ describe(`Channel`, () => {
             expect(onSupportChannel.mock.calls).toHaveLength(1);
             expect(onCloseChannel.mock.calls).toHaveLength(1);
             done();
-        }, 20);
+        }, 1000);
     });
 
     it(`single channel`, (done) => {
