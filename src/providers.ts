@@ -68,7 +68,7 @@ export const locksProvider: LockManager & { delegate: undefined | LockManager } 
     },
     request(a: any, b: any, c?: any) {
         const instance = locksProvider.delegate || navigator.locks;
-        return instance.request(a, b, c);
+        return c === undefined ? instance.request(a, b) : instance.request(a, b, c);
     },
     delegate: undefined,
 };
