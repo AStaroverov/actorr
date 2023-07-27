@@ -1,9 +1,10 @@
+import './locks';
 import { describe, expect, it, jest } from '@jest/globals';
 import {
+    AnyEnvelope,
     connectActorToActor,
     createActorFactory,
     createEnvelope,
-    AnyEnvelope,
     Envelope,
     UnknownEnvelope,
 } from '../src';

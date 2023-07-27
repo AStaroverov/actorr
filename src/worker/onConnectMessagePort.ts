@@ -1,9 +1,10 @@
 import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE, isDedicatedWorkerScope, isSharedWorkerScope } from './defs';
 import { noop } from '../utils/common';
-import { subscribeOnThreadTerminate, threadId } from '../locks';
+import { threadId } from '../utils/thread';
 import { isEnvelope } from '../envelope';
 import { ConnectEnvelope, DisconnectEnvelope } from './types';
 import { checkPortAsReadyOnMessage, setPortName } from '../utils/MessagePort';
+import { subscribeOnUnlock } from '../utils/Locks';
 
 const dependencies = <const>{
     isDedicatedWorkerScope,
@@ -68,7 +69,7 @@ function createListener(port: MessagePort, callback: (name: string, port: Messag
                 }
 
                 if (threadId !== envelope.threadId) {
-                    disposes.push(subscribeOnThreadTerminate(envelope.threadId, disconnect));
+                    disposes.push(subscribeOnUnlock(envelope.threadId, disconnect));
                 }
 
                 mapPortNameToUnsubscribe.set(name, disconnect);

@@ -1,5 +1,5 @@
 import { CLOSE, PING, PONG } from '../defs';
-import { intervalProvider, loggerProvider, timeoutProvider } from '../providers';
+import { intervalProvider, loggerProvider } from '../providers';
 import { createShortRandomString } from './common';
 import { Defer } from './Defer';
 
@@ -63,13 +63,11 @@ export function onPortResolve(port: MessagePort, onResolve: (state: boolean) => 
         port.addEventListener('message', portListener);
 
         queueMicrotask(() => port.postMessage(PING));
-        const timeoutId = timeoutProvider.setTimeout(() => defer.resolve(false), 10_000);
         const intervalId = intervalProvider.setInterval(() => port.postMessage(PING), 25);
 
         defer.promise
             .then((state) => mapPortToState.set(port, state))
             .finally(() => {
-                timeoutProvider.clearTimeout(timeoutId);
                 intervalProvider.clearInterval(intervalId);
                 port.removeEventListener('message', portListener);
             });

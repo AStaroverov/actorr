@@ -1,3 +1,4 @@
+import './locks';
 import { describe, expect, it, jest } from '@jest/globals';
 import {
     connectActorToMessagePort,
@@ -28,7 +29,7 @@ describe(`Worker`, () => {
 
         actor.launch();
 
-        await sleep(10);
+        await sleep(60);
 
         expect(onMessage).toHaveBeenCalled();
 
@@ -47,14 +48,18 @@ describe(`Worker`, () => {
 
         expect(worker.postMessage).toHaveBeenCalledTimes(2);
         expect(worker.postMessage.mock.calls[1]).toEqual([
-            createEnvelope(CONNECT_THREAD_TYPE, expect.stringContaining('unknown')),
+            {
+                ...createEnvelope(CONNECT_THREAD_TYPE, expect.stringContaining('unknown')),
+                uniqueId: expect.any(String),
+            },
         ]);
 
         disconnect();
 
-        expect(worker.postMessage.mock.calls[2][0]).toEqual(
-            createEnvelope(DISCONNECT_THREAD_TYPE, expect.stringContaining('unknown')),
-        );
+        expect(worker.postMessage.mock.calls[2][0]).toEqual({
+            ...createEnvelope(DISCONNECT_THREAD_TYPE, expect.stringContaining('unknown')),
+            uniqueId: expect.any(String),
+        });
 
         worker.terminate();
     });

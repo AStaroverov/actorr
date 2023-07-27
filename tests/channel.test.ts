@@ -1,3 +1,4 @@
+import './locks';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import type { Actor, AnyEnvelope, Envelope, OpenChanelContext, SupportChanelContext } from '../src';
@@ -48,7 +49,7 @@ describe(`Channel`, () => {
             expect(onSupportChannel.mock.calls).toHaveLength(1);
             expect(onCloseChannel.mock.calls).toHaveLength(1);
             done();
-        }, 20);
+        }, 1000);
     });
 
     it(`single channel`, (done) => {

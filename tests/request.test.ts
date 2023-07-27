@@ -1,3 +1,4 @@
+import './locks';
 import { describe, expect, it, jest } from '@jest/globals';
 import {
     connectActorToActor,

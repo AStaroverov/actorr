@@ -1,7 +1,7 @@
 {
   "name": "webactor",
   "description": "Everything that you need for actor architecture on client",
-  "version": "0.2.16",
+  "version": "0.2.20",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AStaroverov/actorr.git"
@@ -32,6 +32,7 @@
     "jest": "^29.5.0",
     "typescript": "^4.9.3",
     "vite": "^4.0.4",
-    "vite-plugin-dts": "^2.1.0"
+    "vite-plugin-dts": "^2.1.0",
+    "web-locks": "^0.0.8"
   }
 }
