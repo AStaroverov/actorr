@@ -28,7 +28,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
         };
         const closeAllChannels = () => {
             for (const dispose of mapDispose.values()) {
-                dispose(ChannelCloseReason.Destroy);
+                dispose(ChannelCloseReason.ManualByOpener);
             }
             mapDispose.clear();
         };

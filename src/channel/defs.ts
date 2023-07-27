@@ -7,7 +7,6 @@ export const ChannelCloseReason = <const>{
     ManualBySupporter: 'ManualBySupporter',
     ManualByOpener: 'ManualByOpener',
     LoseChannel: 'LoseChannel',
-    Destroy: 'Destroy',
 };
 
 export const CHANNEL_HANDSHAKE_TYPE = '__CHANNEL_HANDSHAKE_TYPE__' as const;
