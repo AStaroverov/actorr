@@ -55,11 +55,8 @@ describe(`Channel`, () => {
     });
 
     it(`single channel`, (done) => {
-        const onChannelEnvelope1 = jest.fn(() => {
-            console.log('>> onChannelEnvelope1');
-        });
+        const onChannelEnvelope1 = jest.fn(() => {});
         const onOpenChannel = jest.fn((channel: OpenChanelContext<TLeftEnvelope, TLeftEnvelope>) => {
-            console.log('>> OPEN onOpenChannel');
             channel.subscribe(onChannelEnvelope1);
 
             for (let i = 0; i < 3; i++) {
@@ -72,11 +69,8 @@ describe(`Channel`, () => {
         });
 
         const onCloseChannel = jest.fn();
-        const onChannelEnvelope2 = jest.fn(() => {
-            console.log('>> onChannelEnvelope2');
-        });
+        const onChannelEnvelope2 = jest.fn(() => {});
         const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TRightEnvelope>) => {
-            console.log('>> SUB onOpenChannel');
             const unsub = channel.subscribe(onChannelEnvelope2);
 
             for (let i = 0; i < 4; i++) {
