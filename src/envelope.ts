@@ -1,4 +1,4 @@
-import type { AnyEnvelope, Envelope } from './types';
+import { AnyEnvelope, Envelope } from './types';
 import { threadId } from './utils/thread';
 import { createShortRandomString } from './utils/common';
 
@@ -11,12 +11,14 @@ export function createEnvelope<T extends string, P>(
     payload: P,
     transferable?: undefined | Transferable[],
 ): Envelope<T, P> {
+    const id = createShortRandomString();
     return {
         type,
         payload,
         transferable,
         threadId,
-        uniqueId: createShortRandomString(),
+        uniqueId: id,
+        // channelId: id,
         routePassed: undefined,
         routeAnnounced: undefined,
     };

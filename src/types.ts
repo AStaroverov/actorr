@@ -1,4 +1,4 @@
-import { ChannelCloseEnvelope, ChannelHandshakeEnvelope } from './channel/defs';
+import { ChannelCloseEnvelope, ChannelHandshakeEnvelope, ChannelReadyEnvelope } from './channel/defs';
 
 export type ValueOf<T> = T[keyof T];
 
@@ -15,13 +15,15 @@ export type Envelope<T extends string, P> = {
 
     uniqueId: string;
     threadId: string;
+    // channelId: string;
+
     routePassed: undefined | string;
     routeAnnounced: undefined | string;
 };
 
 export type AnyEnvelope = Envelope<any, any>;
 export type UnknownEnvelope = Envelope<string, unknown>;
-export type SystemEnvelope = ChannelHandshakeEnvelope | ChannelCloseEnvelope;
+export type SystemEnvelope = ChannelHandshakeEnvelope | ChannelReadyEnvelope | ChannelCloseEnvelope;
 
 export type Dispatch<T extends AnyEnvelope> = (envelope: T | SystemEnvelope) => unknown;
 export type Subscribe<T extends AnyEnvelope> = <F extends false | true | void = false>(
