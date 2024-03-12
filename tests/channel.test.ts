@@ -129,7 +129,6 @@ describe(`Channel`, () => {
             channel.subscribe(onChannelEnvelope1);
 
             setTimeout(() => {
-                console.log('>> ActorStart DDD');
                 for (let i = 0; i < 3; i++) {
                     channel.dispatch(createEnvelope(LEFT_TYPE, i));
                 }

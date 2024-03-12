@@ -11,11 +11,15 @@ export function createResponseFactory<_T extends AnyEnvelope>(dispatch: Dispatch
         const routePassed = getResponseName(requester);
         const routeAnnounced = requester.routePassed;
 
-        return function response(envelope: T | SystemEnvelope) {
+        function response(envelope: T | SystemEnvelope) {
             envelope.routePassed = routePassed;
             envelope.routeAnnounced = routeAnnounced;
 
             return dispatch(envelope);
-        };
+        }
+
+        response.responseName = routePassed;
+
+        return response;
     };
 }

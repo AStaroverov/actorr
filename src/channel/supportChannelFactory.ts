@@ -28,7 +28,7 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
 
         const subscribeToChannel: Subscribe<In> = (callback, withSystemEnvelopes) => {
             return subscribe((envelope) => {
-                if (envelope.routeAnnounced!.startsWith(handshakeEnvelope.routePassed!)) {
+                if (envelope.routeAnnounced?.startsWith(dispatchToChannel.responseName)) {
                     callback(envelope as In);
                 }
             }, withSystemEnvelopes);
