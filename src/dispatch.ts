@@ -35,12 +35,7 @@ export function createDeferredDispatch<T extends EnvelopeDispatchTarget>(target:
         if (isSystemEnvelope(envelope)) {
             dispatch(envelope);
         } else {
-            promise
-                .then(() => {
-                    console.log('>> SEND', envelope.type);
-                    dispatch(envelope);
-                })
-                .catch(loggerProvider.error);
+            promise.then(() => dispatch(envelope)).catch(loggerProvider.error);
         }
     };
 }
