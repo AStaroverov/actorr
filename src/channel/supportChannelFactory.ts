@@ -9,6 +9,7 @@ import { lock, subscribeOnUnlock } from '../utils/Locks';
 import { timeoutProvider } from '../providers';
 import { createEnvelope } from '../envelope';
 import { Defer } from '../utils/Defer';
+import { sleep } from '../utils';
 
 export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const subscribe = createSubscribe(transmitter);
@@ -63,12 +64,13 @@ export function supportChannelFactory<T extends EnvelopeTransmitter>(transmitter
             unsubscribeOnReady();
             dispose?.(reason);
 
-            if (reason === ChannelCloseReason.ManualByOpener || reason === ChannelCloseReason.LoseChannel) {
-                unlockResponseSide();
-            } else {
-                dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined) as Out);
-                timeoutProvider.setTimeout(unlockResponseSide, 1000);
+            if (reason === ChannelCloseReason.ManualBySupporter) {
+                Promise.race([channelReady.promise, sleep(1000)]).then(() => {
+                    dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined) as Out);
+                });
             }
+
+            timeoutProvider.setTimeout(unlockResponseSide, 1000);
         };
 
         dispatchToChannel(createEnvelope(CHANNEL_READY_TYPE, undefined) as Out);

@@ -10,6 +10,7 @@ import { lock, subscribeOnUnlock } from '../utils/Locks';
 import { timeoutProvider } from '../providers';
 import { createResponseFactory } from '../request/response';
 import { Defer } from '../utils/Defer';
+import { sleep } from '../utils';
 
 export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T) {
     const request = createRequest(transmitter);
@@ -82,7 +83,9 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
                 dispose?.(reason);
 
                 if (reason === ChannelCloseReason.ManualByOpener) {
-                    dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
+                    Promise.race([channelReady.promise, sleep(1000)]).then(() => {
+                        dispatchToChannel(createEnvelope(CHANNEL_CLOSE_TYPE, undefined));
+                    });
                 }
             });
 
@@ -92,7 +95,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
         return function closeOpenedChannels() {
             closeResponseSubscription();
             closeAllChannels();
-            unlockRequestSide();
+            timeoutProvider.setTimeout(unlockRequestSide, 1000);
         };
     };
 }
