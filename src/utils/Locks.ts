@@ -9,7 +9,6 @@ if (!webLocksSupported && process.env.NODE_ENV !== 'test') {
 }
 
 export function lock(key: string) {
-    loggerProvider.info('Lock ', key);
     const defer = new Defer();
     void locksProvider.request(key, () => defer.promise);
     return () => defer.resolve(undefined);
@@ -20,12 +19,7 @@ export const subscribeOnUnlock = function subscribeOnThreadTerminate(threadId: s
     // if we call locksProvider.request from 2 threads at same time, it will have unknown order
     // I hope, that setTimeout will help to avoid this and 50ms is enough
     const delayId = timeoutProvider.setTimeout(() => {
-        void locksProvider
-            .request(threadId, { signal: locksController.signal }, () => {
-                loggerProvider.info('Unlocked ', threadId);
-                callback();
-            })
-            .catch(noop);
+        void locksProvider.request(threadId, { signal: locksController.signal }, callback).catch(noop);
     }, 50);
 
     return () => {

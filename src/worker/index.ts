@@ -8,6 +8,7 @@ export * from './onConnectMessagePort';
 
 // We must lock thread at root level to prevent thread silent termination
 lock(threadId);
+loggerProvider.info(`Thread[${threadId}] locked`);
 subscribeOnUnlock(threadId, () => {
-    loggerProvider.error(`Thread[${threadId}] terminated without reason.`);
+    loggerProvider.error(`Thread[${threadId}] terminated without reason`);
 });
