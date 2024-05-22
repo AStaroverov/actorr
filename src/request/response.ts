@@ -1,9 +1,9 @@
 import type { AnyEnvelope, Dispatch } from '../types';
 import { SystemEnvelope } from '../types';
-import { getFirstRoutePart } from '../route';
+import { createRequestName } from './request';
 
-export function getResponseName(request: AnyEnvelope): string {
-    return getFirstRoutePart(request.routePassed!).replace('Request', 'Response');
+function getResponseName(request: AnyEnvelope): string {
+    return createRequestName(request.type).replace('Request', 'Response');
 }
 
 export function createResponseFactory<_T extends AnyEnvelope>(dispatch: Dispatch<_T>) {
@@ -11,11 +11,15 @@ export function createResponseFactory<_T extends AnyEnvelope>(dispatch: Dispatch
         const routePassed = getResponseName(requester);
         const routeAnnounced = requester.routePassed;
 
-        return function response(envelope: T | SystemEnvelope) {
+        function response(envelope: T | SystemEnvelope) {
             envelope.routePassed = routePassed;
             envelope.routeAnnounced = routeAnnounced;
 
             return dispatch(envelope);
-        };
+        }
+
+        response.responseName = routePassed;
+
+        return response;
     };
 }

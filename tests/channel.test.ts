@@ -14,22 +14,24 @@ import { Mock } from 'jest-mock';
 
 export const OPEN_TYPE = 'OPEN_TYPE' as const;
 export type TOpenEnvelope = Envelope<typeof OPEN_TYPE, undefined>;
-export const CHANNEL_TYPE = 'CHANNEL_TYPE' as const;
-export type TChannelEnvelope = Envelope<typeof CHANNEL_TYPE, number>;
+export const LEFT_TYPE = 'LEFT_TYPE' as const;
+export type TLeftEnvelope = Envelope<typeof LEFT_TYPE, number>;
+export const RIGHT_TYPE = 'CHANNEL_TYPE' as const;
+export type TRightEnvelope = Envelope<typeof RIGHT_TYPE, number>;
 
 describe(`Channel`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
 
     // TODO: use web worker
     it(`fast close`, (done) => {
-        const ac1 = createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`A1`, (context) => {
+        const ac1 = createActor<TLeftEnvelope, TOpenEnvelope | TLeftEnvelope>(`A1`, (context) => {
             const openChannel = openChannelFactory(context);
             return openChannel(createEnvelope(OPEN_TYPE, undefined), () => {});
         });
 
         const onCloseChannel = jest.fn();
         const onSupportChannel = jest.fn(() => onCloseChannel);
-        const ac2 = createActor<TOpenEnvelope | TChannelEnvelope, TChannelEnvelope>(`A2`, (context) => {
+        const ac2 = createActor<TOpenEnvelope | TLeftEnvelope, TLeftEnvelope>(`A2`, (context) => {
             const supportChannel = supportChannelFactory(context);
 
             return context.subscribe((envelope) => {
@@ -52,41 +54,33 @@ describe(`Channel`, () => {
         }, 1000);
     });
 
-    it(`single channel`, (done) => {
+    it(`single one-way channel with sync close`, (done) => {
         const onChannelEnvelope1 = jest.fn(() => {});
-        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TLeftEnvelope, TLeftEnvelope>) => {
             channel.subscribe(onChannelEnvelope1);
-
-            for (let i = 0; i < 3; i++) {
-                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
-            }
         });
-        const ac1 = createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`A1`, (context) => {
+        const ac1 = createActor<TLeftEnvelope, TOpenEnvelope | TLeftEnvelope>(`A1`, (context) => {
             const openChannel = openChannelFactory(context);
             return openChannel(createEnvelope(OPEN_TYPE, undefined), onOpenChannel);
         });
 
         const onCloseChannel = jest.fn();
-        const onChannelEnvelope2 = jest.fn(() => {});
-        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
-            const unsub = channel.subscribe(onChannelEnvelope2);
-
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TRightEnvelope>) => {
             for (let i = 0; i < 4; i++) {
-                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
+                channel.dispatch(createEnvelope(RIGHT_TYPE, i));
             }
 
             return () => {
-                unsub();
                 onCloseChannel();
             };
         });
-        const ac2 = createActor<TOpenEnvelope | TChannelEnvelope, TChannelEnvelope>(`A2`, (context) => {
+        const ac2 = createActor<TOpenEnvelope | TLeftEnvelope, TLeftEnvelope>(`A2`, (context) => {
             const supportChannel = supportChannelFactory(context);
 
             return context.subscribe((envelope) => {
                 if (envelope.type === OPEN_TYPE) {
                     const close = supportChannel(envelope, onSupportChannel);
-                    setTimeout(close, 10);
+                    close();
                 }
             });
         });
@@ -97,6 +91,68 @@ describe(`Channel`, () => {
         ac1.launch();
 
         setTimeout(() => {
+            expect(onOpenChannel.mock.calls).toHaveLength(1);
+            expect(onSupportChannel.mock.calls).toHaveLength(1);
+            expect(onChannelEnvelope1.mock.calls).toHaveLength(4);
+            expect(onCloseChannel.mock.calls).toHaveLength(1);
+            done();
+        }, 100);
+    });
+
+    it(`single two-way channel`, (done) => {
+        const onChannelEnvelope1 = jest.fn(() => {});
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TLeftEnvelope, TLeftEnvelope>) => {
+            channel.subscribe(onChannelEnvelope1);
+
+            for (let i = 0; i < 3; i++) {
+                channel.dispatch(createEnvelope(LEFT_TYPE, i));
+            }
+        });
+        const ac1 = createActor<TLeftEnvelope, TOpenEnvelope | TLeftEnvelope>(`A1`, (context) => {
+            const openChannel = openChannelFactory(context);
+            return openChannel(createEnvelope(OPEN_TYPE, undefined), onOpenChannel);
+        });
+
+        const onCloseChannel = jest.fn();
+        const onChannelEnvelope2 = jest.fn(() => {});
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TRightEnvelope>) => {
+            const unsub = channel.subscribe(onChannelEnvelope2);
+
+            for (let i = 0; i < 4; i++) {
+                channel.dispatch(createEnvelope(RIGHT_TYPE, i));
+            }
+
+            return () => {
+                unsub();
+                onCloseChannel();
+            };
+        });
+        const ac2 = createActor<TOpenEnvelope | TLeftEnvelope, TLeftEnvelope>(`A2`, (context) => {
+            const supportChannel = supportChannelFactory(context);
+            const disposes = [
+                context.subscribe((envelope) => {
+                    if (envelope.type === OPEN_TYPE) {
+                        const close = supportChannel(envelope, onSupportChannel);
+                        disposes.push(close);
+                    }
+                }),
+            ];
+
+            return () => {
+                for (const dispose of disposes) {
+                    dispose();
+                }
+            };
+        });
+
+        connectActorToActor(ac1, ac2);
+
+        ac2.launch();
+        ac1.launch();
+
+        setTimeout(() => {
+            ac1.destroy();
+            ac2.destroy();
             expect(onOpenChannel.mock.calls).toHaveLength(1);
             expect(onSupportChannel.mock.calls).toHaveLength(1);
             expect(onChannelEnvelope1.mock.calls).toHaveLength(4);
@@ -123,30 +179,34 @@ describe(`Channel`, () => {
         const onChannelEnvelope1 = jest.fn();
         const onChannelEnvelope2 = jest.fn();
 
-        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TLeftEnvelope, TLeftEnvelope>) => {
             channel.subscribe(onChannelEnvelope1);
 
-            for (let i = 0; i < 3; i++) {
-                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
-            }
+            setTimeout(() => {
+                for (let i = 0; i < 3; i++) {
+                    channel.dispatch(createEnvelope(LEFT_TYPE, i));
+                }
+            }, 1);
         });
 
-        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TRightEnvelope>) => {
             channel.subscribe(onChannelEnvelope2);
 
-            for (let i = 0; i < 4; i++) {
-                channel.dispatch(createEnvelope(CHANNEL_TYPE, i));
-            }
+            setTimeout(() => {
+                for (let i = 0; i < 4; i++) {
+                    channel.dispatch(createEnvelope(RIGHT_TYPE, i));
+                }
+            }, 2);
         });
 
         const createActorStart = () =>
-            createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`ActorStart`, (context) => {
+            createActor<TLeftEnvelope, TOpenEnvelope | TLeftEnvelope>(`ActorStart`, (context) => {
                 const openChannel = openChannelFactory(context);
                 return openChannel(createEnvelope(OPEN_TYPE, undefined), onOpenChannel);
             });
 
         const createActorEnd = () =>
-            createActor<TOpenEnvelope | TChannelEnvelope, TChannelEnvelope>(`ActorEnd`, (context) => {
+            createActor<TOpenEnvelope | TLeftEnvelope, TLeftEnvelope>(`ActorEnd`, (context) => {
                 const supportChannel = supportChannelFactory(context);
 
                 return context.subscribe((envelope) => {
@@ -181,30 +241,30 @@ describe(`Channel`, () => {
         const onChannelEnvelopesFromOpen: Mock[] = [];
         const onChannelEnvelopesFromSupport: Mock[] = [];
 
-        const onOpenChannel = jest.fn((channel: OpenChanelContext<TChannelEnvelope, TChannelEnvelope>) => {
+        const onOpenChannel = jest.fn((channel: OpenChanelContext<TLeftEnvelope, TLeftEnvelope>) => {
             const uniq = Math.random();
             const onChannelEnvelope = jest.fn();
 
             for (let i = 0; i < 3; i++) {
-                channel.dispatch(createEnvelope(CHANNEL_TYPE, uniq));
+                channel.dispatch(createEnvelope(LEFT_TYPE, uniq));
             }
 
             channel.subscribe(onChannelEnvelope);
             onChannelEnvelopesFromOpen.push(onChannelEnvelope);
         });
-        const ac1 = createActor<TChannelEnvelope, TOpenEnvelope | TChannelEnvelope>(`A1`, (context) => {
+        const ac1 = createActor<TLeftEnvelope, TOpenEnvelope | TLeftEnvelope>(`A1`, (context) => {
             const openChannel = openChannelFactory(context);
             return openChannel(createEnvelope(OPEN_TYPE, undefined), onOpenChannel);
         });
 
-        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TChannelEnvelope>) => {
+        const onSupportChannel = jest.fn((channel: SupportChanelContext<TOpenEnvelope, TRightEnvelope>) => {
             const uniq = Math.random();
             const onChannelEnvelope = jest.fn();
             const onCloseChannel = jest.fn(() => unsub());
             const unsub = channel.subscribe(onChannelEnvelope);
 
             for (let i = 0; i < 4; i++) {
-                channel.dispatch(createEnvelope(CHANNEL_TYPE, uniq));
+                channel.dispatch(createEnvelope(RIGHT_TYPE, uniq));
             }
 
             onCloseChannels.push(onCloseChannel);
@@ -213,7 +273,7 @@ describe(`Channel`, () => {
             return onCloseChannel;
         });
         const createOtherActor = () =>
-            createActor<TOpenEnvelope | TChannelEnvelope, TChannelEnvelope>(`OTHER`, (context) => {
+            createActor<TOpenEnvelope | TLeftEnvelope, TLeftEnvelope>(`OTHER`, (context) => {
                 const supportChannel = supportChannelFactory(context);
 
                 return context.subscribe((envelope) => {
@@ -239,7 +299,7 @@ describe(`Channel`, () => {
 
         setTimeout(() => {
             for (const onChannelEnvelope of onChannelEnvelopesFromOpen) {
-                const calls = onChannelEnvelope.mock.calls as Array<[TChannelEnvelope]>;
+                const calls = onChannelEnvelope.mock.calls as Array<[TLeftEnvelope]>;
 
                 expect(calls).toHaveLength(4);
 
@@ -249,7 +309,7 @@ describe(`Channel`, () => {
             }
 
             for (const onChannelEnvelope of onChannelEnvelopesFromSupport) {
-                const calls = onChannelEnvelope.mock.calls as Array<[TChannelEnvelope]>;
+                const calls = onChannelEnvelope.mock.calls as Array<[TLeftEnvelope]>;
 
                 expect(calls).toHaveLength(3);
 

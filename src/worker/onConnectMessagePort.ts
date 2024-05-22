@@ -5,6 +5,7 @@ import { isEnvelope } from '../envelope';
 import { ConnectEnvelope, DisconnectEnvelope } from './types';
 import { checkPortAsReadyOnMessage, setPortName } from '../utils/MessagePort';
 import { subscribeOnUnlock } from '../utils/Locks';
+import { loggerProvider } from '../providers';
 
 const dependencies = <const>{
     isDedicatedWorkerScope,
@@ -48,31 +49,37 @@ function createListener(port: MessagePort, callback: (name: string, port: Messag
 
         if (event.data.type === CONNECT_THREAD_TYPE) {
             const envelope = event.data as ConnectEnvelope;
-            const name = envelope.payload;
+            const connectedThreadId = envelope.threadId;
+            const connectedName = envelope.payload;
 
-            mapPortNameCount.set(name, (mapPortNameCount.get(name) ?? 0) + 1);
+            mapPortNameCount.set(connectedName, (mapPortNameCount.get(connectedName) ?? 0) + 1);
 
-            if (!mapPortNameToUnsubscribe.has(name)) {
-                setPortName(port, name);
+            if (!mapPortNameToUnsubscribe.has(connectedName)) {
+                setPortName(port, connectedName);
 
                 const disposes: Array<Function> = [
                     () => {
-                        mapPortNameCount.delete(name);
-                        mapPortNameToUnsubscribe.delete(name);
+                        mapPortNameCount.delete(connectedName);
+                        mapPortNameToUnsubscribe.delete(connectedName);
                     },
                 ];
                 const disconnect = () => disposes.forEach((dispose) => dispose());
-                const callbackDispose = callback(name, port);
+                const callbackDispose = callback(connectedName, port);
 
                 if (callbackDispose !== undefined) {
                     disposes.push(callbackDispose);
                 }
 
-                if (threadId !== envelope.threadId) {
-                    disposes.push(subscribeOnUnlock(envelope.threadId, disconnect));
+                if (threadId !== connectedThreadId) {
+                    disposes.push(
+                        subscribeOnUnlock(connectedThreadId, () => {
+                            loggerProvider.info(`Disconnect thread[${connectedThreadId}] by unlock`);
+                            disconnect();
+                        }),
+                    );
                 }
 
-                mapPortNameToUnsubscribe.set(name, disconnect);
+                mapPortNameToUnsubscribe.set(connectedName, disconnect);
             }
         }
 
@@ -80,6 +87,8 @@ function createListener(port: MessagePort, callback: (name: string, port: Messag
             const envelope = event.data as DisconnectEnvelope;
             const name = envelope.payload;
             const count = (mapPortNameCount.get(name) ?? 1) - 1;
+
+            loggerProvider.info(`Disconnect thread[${envelope.threadId}] by message`);
 
             if (count > 0) {
                 mapPortNameCount.set(name, count);

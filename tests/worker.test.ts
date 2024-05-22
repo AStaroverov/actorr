@@ -10,9 +10,9 @@ import {
     subscribe,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
-import { sleep } from './utils';
 import { WorkerGlobalScopeMock, WorkerMock } from './mocks';
 import { CONNECT_THREAD_TYPE, DISCONNECT_THREAD_TYPE } from '../src/worker/defs';
+import { sleep } from '../src/utils';
 
 describe(`Worker`, () => {
     const createActor = createActorFactory({ getMailbox: createMailbox });
@@ -42,7 +42,7 @@ describe(`Worker`, () => {
             context.dispatch(createEnvelope(`test`, `test`));
         });
         const worker = new WorkerMock();
-        const disconnect = connectActorToWorker(actor, worker as unknown as Worker);
+        const disconnect = connectActorToWorker(actor, worker as any);
 
         await sleep(10);
 

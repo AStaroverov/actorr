@@ -1,6 +1,3 @@
-import { threadId } from './utils/thread';
-import { lock } from './utils/Locks';
-
 export * from './providers';
 
 export * from './types';
@@ -17,10 +14,8 @@ export { ChannelCloseReason } from './channel/defs';
 export { openChannelFactory } from './channel/openChannelFactory';
 export { supportChannelFactory } from './channel/supportChannelFactory';
 
+export * from './worker';
 export * from './worker/types';
-export { onConnectMessagePort } from './worker/onConnectMessagePort';
-export { connectActorToWorker, connectWorkerToActor } from './worker/connectActorToWorker';
-export { connectMessagePortToActor, connectActorToMessagePort } from './worker/connectActorToMessagePort';
 
 export { createDispatch, dispatch } from './dispatch';
 export { createSubscribe, subscribe } from './subscribe';
@@ -28,6 +23,3 @@ export { createSubscribe, subscribe } from './subscribe';
 // we need more tests to export this
 // export { connectWorkerToWorker } from './worker/connectWorkerToWorker';
 export { createMessagePortName } from './utils/MessagePort';
-
-// We must lock thread at root level to prevent thread silent termination
-lock(threadId);
