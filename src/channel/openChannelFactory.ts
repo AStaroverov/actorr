@@ -21,7 +21,7 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
         onOpen: (context: OpenChanelContext<In, Out>) => void | ChannelDispose,
         options?: {
             timeout?: {
-                delay: number;
+                first: number;
                 callback: VoidFunction;
             };
         },
