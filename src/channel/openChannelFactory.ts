@@ -43,6 +43,16 @@ export function openChannelFactory<T extends EnvelopeTransmitter>(transmitter: T
         };
 
         const unlockRequestSide = lock(copy.uniqueId);
+
+        if (typeof options?.timeout?.callback === 'function') {
+            const callback = options.timeout.callback;
+            options.timeout.callback = () => {
+                callback();
+                closeAllChannels();
+                timeoutProvider.setTimeout(unlockRequestSide, 1000);
+            };
+        }
+
         const closeResponseSubscription = request(
             copy,
             (responseEnvelope) => {
