@@ -20,7 +20,7 @@ export const subscribeOnUnlock = function subscribeOnThreadTerminate(threadId: s
     // I hope, that setTimeout will help to avoid this and 50ms is enough
     const delayId = timeoutProvider.setTimeout(() => {
         void locksProvider.request(threadId, { signal: locksController.signal }, callback).catch(noop);
-    }, 50);
+    }, 300);
 
     return () => {
         timeoutProvider.clearTimeout(delayId);
