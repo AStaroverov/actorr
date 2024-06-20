@@ -10,6 +10,7 @@ import {
     UnknownEnvelope,
 } from '../src';
 import { createMailbox } from '../examples/common/actors/createActor';
+import { sleep } from '../src/utils';
 
 export const REQUEST_TYPE = 'REQUEST_TYPE' as const;
 export type TReqEnvelope = Envelope<typeof REQUEST_TYPE, undefined>;
@@ -54,6 +55,23 @@ describe(`Request`, () => {
         ac1.launch();
 
         expect(onResponse.mock.calls).toHaveLength(2);
+    });
+
+    it(`request + timeout`, async () => {
+        const onResponse = jest.fn();
+        const onTimeout = jest.fn();
+        const ac1 = createActor<UnknownEnvelope, TReqEnvelope>(`A1`, (context) => {
+            const request = createRequest(context);
+            const close = request(createEnvelope(REQUEST_TYPE, undefined), onResponse, {
+                timeout: { first: 100, callback: onTimeout },
+            });
+        });
+        ac1.launch();
+
+        await sleep(200);
+
+        expect(onResponse.mock.calls).toHaveLength(0);
+        expect(onTimeout.mock.calls).toHaveLength(1);
     });
 
     it(`request + multi response`, () => {
